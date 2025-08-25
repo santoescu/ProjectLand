@@ -10,9 +10,11 @@ use Livewire\Component;
 
 class Profile extends Component
 {
+
     public string $name = '';
 
     public string $email = '';
+
 
     /**
      * Mount the component.
@@ -50,6 +52,7 @@ class Profile extends Component
         }
 
         $user->save();
+        $this->dispatch('toast', type: 'info', message: 'Perfil actualizado correctamente');
 
         $this->dispatch('profile-updated', name: $user->name);
     }

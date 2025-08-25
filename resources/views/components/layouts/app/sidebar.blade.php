@@ -6,6 +6,12 @@
                'icon' => 'home',
                'url' => route('dashboard'),
                'current' => request()->routeIs('dashboard')
+            ],
+            [
+               'name' => __('Contractors'),
+               'icon' => 'clipboard-document-list',
+               'url' => route('contractors.index'),
+               'current' => request()->routeIs('contractors.index')
             ]
         ]
     ];
@@ -16,7 +22,8 @@
         @include('partials.head')
     </head>
     <body class="min-h-screen bg-white dark:bg-zinc-800">
-        <flux:sidebar sticky stashable class="border-e border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900">
+    @include('components.toast')
+    <flux:sidebar sticky stashable class="border-e border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900">
             <flux:sidebar.toggle class="lg:hidden" icon="x-mark" />
 
             <a href="{{ route('dashboard') }}" class="me-5 flex items-center space-x-2 rtl:space-x-reverse" wire:navigate>
@@ -134,7 +141,7 @@
         </flux:header>
 
         {{ $slot }}
-
         @fluxScripts
     </body>
+
 </html>

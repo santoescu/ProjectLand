@@ -37,7 +37,6 @@
                 </x-action-message>
             </div>
         </form>
-
         <livewire:settings.delete-user-form />
     </x-settings.layout>
 </section>
