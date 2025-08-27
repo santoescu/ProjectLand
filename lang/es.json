@@ -44,6 +44,7 @@
     "Created": "",
     "Delete": "Eliminar",
     "Delete :name": "Eliminar :name",
+    "Delete :name?": "¿Eliminar :name?",
     "Detach": "Desvincular",
     "Details": "Detalles",
     "Disable": "Deshabilitar",
@@ -302,11 +303,13 @@
     "Profile information updated.": "Información del perfil actualizada.",
     "Contractor": "Contratista",
     "Contractors": "Contratistas",
+    "contractor": "contratista",
+    "contractors": "contratistas",
     "Plataform": "Plataforma",
     "Updated :name": ":name Actualizado",
     "Deleted :name": ":name Eliminado",
-    "": "",
-    "": "",
+    "You're about to delete this :name.": "Estás a punto de eliminar este :name.",
+    "This action cannot be reversed.": "Su acción no se puede revertir.",
     "": "",
     "": ""
 }

@@ -98,14 +98,44 @@
                 <flux:spacer />
                 <flux:button type="submit" icon="archive-box-arrow-down" variant="primary"></flux:button>
 
-                <flux:button
-                    type="button"
-                    icon="archive-box-x-mark"
-                    variant="danger"
-                    onclick="deleteContractor()">
-                </flux:button>
+                <flux:modal.trigger name="confirm-delete">
+                    <flux:button
+                        type="button"
+                        icon="archive-box-x-mark"
+                        variant="danger">
+                    </flux:button>
+                </flux:modal.trigger>
             </div>
         </form>
+    </flux:modal>
+
+    <!-- Modal de confirmación -->
+    <flux:modal name="confirm-delete" class="md:w-96" :dismissible="true">
+        <div class="space-y-6">
+            <div>
+                <flux:heading size="lg">{{ __("Delete :name?", ['name' => __('Contractor')]) }}</flux:heading>
+                <flux:text class="mt-2">
+                    <p>{{ __("You're about to delete this :name.", ['name' => __('contractor')]) }}</p>
+                    <p>{{ __('This action cannot be reversed.') }}</p>
+                </flux:text>
+            </div>
+            <div class="flex gap-2">
+                <flux:spacer />
+            <!-- Botón cancelar -->
+            <flux:modal.close >
+                <flux:button variant="ghost" x-on:click="$flux.modal('confirm-delete').close()">
+                    {{ __('Cancel') }}
+                </flux:button>
+            </flux:modal.close>
+            <!-- Botón confirmar -->
+            <form id="deleteContractorForm" action="{{ route('contractors.destroy', $contractor->id) }}" method="POST">
+                @csrf
+                @method('DELETE')
+                <flux:button type="submit" variant="danger" icon="archive-box-x-mark">
+                    {{ __('Delete') }}
+                </flux:button>
+            </form>
+        </div>
     </flux:modal>
     <!-- Formulario de eliminar oculto -->
     <form id="deleteContractorForm" method="POST" style="display:none">
@@ -125,12 +155,7 @@
             document.getElementById('editContractorForm').action = `/contractors/${contractor.id}`;
             document.getElementById('deleteContractorForm').action = `/contractors/${contractor.id}` ;
         }
-        function deleteContractor() {
-            const deleteForm = document.getElementById('deleteContractorForm');
-            if (confirm('¿Seguro que quieres eliminar este contratista?')) {
-                deleteForm.submit();
-            }
-        }
+
     </script>
 
     @push('scripts')
