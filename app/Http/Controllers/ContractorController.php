@@ -46,8 +46,7 @@ class ContractorController extends Controller
             'type' => 'success',
             'message' => __("Created :name", ['name' => __('Contractor')])
         ]);
-        return redirect()->route('contractors.index')
-            ->with('success', 'Contratista creado correctamente.');
+        return redirect()->route('contractors.index');
     }
 
     /**
@@ -87,8 +86,7 @@ class ContractorController extends Controller
             'type' => 'success',
             'message' => __("Updated :name", ['name' => __('Contractor')])
         ]);
-        return redirect()->route('contractors.index')
-            ->with('success', 'Contratista actualizado correctamente.');
+        return redirect()->route('contractors.index');
     }
 
     /**
@@ -104,7 +102,6 @@ class ContractorController extends Controller
             'message' => __("Deleted :name", ['name' => __('Contractor')])
         ]);
 
-        return redirect()->route('contractors.index')
-            ->with('success', 'Contratista eliminado correctamente.');
+        return redirect()->route('contractors.index');
     }
 }
