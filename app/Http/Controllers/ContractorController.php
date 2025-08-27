@@ -13,18 +13,8 @@ class ContractorController extends Controller
      */
     public function index(Request $request)
     {
-        session()->flash('toast', [
-            'type' => 'success',
-            'message' => 'Guardado correctamente'
-        ]);
 
         $query = Contractor::query();
-
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where('company_name', 'like', "%{$search}%")
-                ->orWhere('contact_name', 'like', "%{$search}%");
-        }
 
         $contractors = $query->paginate(10);
 
@@ -52,6 +42,10 @@ class ContractorController extends Controller
         ]);
 
         Contractor::create($request->all());
+        session()->flash('toast', [
+            'type' => 'success',
+            'message' => __("Created :name", ['name' => __('Contractor')])
+        ]);
         return redirect()->route('contractors.index')
             ->with('success', 'Contratista creado correctamente.');
     }
@@ -89,7 +83,10 @@ class ContractorController extends Controller
 
         $contractor = Contractor::findOrFail($id);
         $contractor->update($request->all());
-
+        session()->flash('toast', [
+            'type' => 'success',
+            'message' => __("Updated :name", ['name' => __('Contractor')])
+        ]);
         return redirect()->route('contractors.index')
             ->with('success', 'Contratista actualizado correctamente.');
     }
@@ -101,6 +98,11 @@ class ContractorController extends Controller
     {
         $contractor = Contractor::findOrFail($id);
         $contractor->delete();
+
+        session()->flash('toast', [
+            'type' => 'success',
+            'message' => __("Deleted :name", ['name' => __('Contractor')])
+        ]);
 
         return redirect()->route('contractors.index')
             ->with('success', 'Contratista eliminado correctamente.');

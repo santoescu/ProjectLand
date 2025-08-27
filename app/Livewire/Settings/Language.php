@@ -22,7 +22,7 @@ class Language extends Component
         $user->save();
 
         app()->setLocale($this->locale);
-
+        $this->dispatch('toast', type: 'success', message: __('Saved.'));
         $this->dispatch('update-locale');
     }
 

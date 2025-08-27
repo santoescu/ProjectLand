@@ -52,7 +52,7 @@ class Profile extends Component
         }
 
         $user->save();
-        $this->dispatch('toast', type: 'info', message: 'Perfil actualizado correctamente');
+        $this->dispatch('toast', type: 'success', message: __('Saved.'));
 
         $this->dispatch('profile-updated', name: $user->name);
     }
