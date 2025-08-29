@@ -18,7 +18,7 @@ class User extends Eloquent implements AuthenticatableContract
     use Authenticatable, Notifiable;
 
     protected $collection = 'users'; // colección en Mongo
-    protected $fillable = ['name', 'email', 'password', 'locale'];
+    protected $fillable = ['name', 'email', 'password', 'locale','role'];
     protected $hidden = ['password', 'remember_token'];
 
 

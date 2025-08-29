@@ -1,29 +1,26 @@
-<x-layouts.app :title="__('Dashboard')">
+<x-layouts.app :title="__('Users')">
 
     @include('partials.tittle', [
-    'title' => __("Create :name", ['name' => __('Contractor')]) ,
+    'title' => __("Create :name", ['name' => __('User')]) ,
     'subheading' => ""
     ])
 
-    <form method="POST" action="{{ route('contractors.store') }}" class="space-y-4 max-w-xl mx-auto">
+    <form method="POST" action="{{ route('users.store') }}" class="space-y-4 max-w-xl mx-auto">
         @csrf
 
-        <flux:input label="{{__('Company')}}" name="company_name" required />
-
-        <flux:input label="{{__('Contact')}}" name="contact_name" required />
-
-        <flux:input label="{{__('Phone')}}" name="contact_phone" required />
-
-        <flux:select label="{{__('Payment method')}}" name="payment_method" required>
-            <option value="Zelle">Zelle</option>
-            <option value="ACH">ACH</option>
-            <option value="Wire">Wire</option>
+        <flux:input label="{{__('Name')}}" name="name" :value="old('name')" />
+        <flux:input label="{{__('Email')}}" name="email" :value="old('email')" />
+        <flux:select label="{{__('Role')}}" name="role" >
+            <option value="accounting_assistant">{{ __('Accounting Assistant') }}</option>
+            <option value="project_manager">{{ __('Project Manager') }}</option>
+            <option value="director">{{ __('Director') }}</option>
         </flux:select>
+
 
         <div class="flex justify-end gap-2">
             <flux:button type="submit" variant="primary">{{__('Save')}}</flux:button>
 
-            <a href="{{ route('contractors.index') }}">
+            <a href="{{ route('users.index') }}">
                 <flux:button variant="ghost">{{__('Cancel')}}</flux:button>
             </a>
         </div>

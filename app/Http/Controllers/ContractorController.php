@@ -49,23 +49,7 @@ class ContractorController extends Controller
         return redirect()->route('contractors.index');
     }
 
-    /**
-     * Mostrar un contratista específico.
-     */
-    public function show($id)
-    {
-        $contractor = Contractor::findOrFail($id);
-        return view('contractors.show', compact('contractor'));
-    }
 
-    /**
-     * Mostrar formulario de edición.
-     */
-    public function edit($id)
-    {
-        $contractor = Contractor::findOrFail($id);
-        return view('contractors.edit', compact('contractor'));
-    }
 
     /**
      * Actualizar contratista.
@@ -82,10 +66,6 @@ class ContractorController extends Controller
 
         $contractor = Contractor::findOrFail($id);
         $contractor->update($request->all());
-        session()->flash('toast', [
-            'type' => 'success',
-            'message' => __("Updated :name", ['name' => __('Contractor')])
-        ]);
         return redirect()->route('contractors.index');
     }
 

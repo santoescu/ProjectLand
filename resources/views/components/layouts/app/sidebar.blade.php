@@ -1,4 +1,5 @@
 @php
+    $userRole = Auth::user()->role;
     $groups = [
         __('Plataform') =>[
             [
@@ -6,15 +7,29 @@
                'icon' => 'home',
                'url' => route('dashboard'),
                'current' => request()->routeIs('dashboard')
-            ],
-            [
-               'name' => __('Contractors'),
-               'icon' => 'clipboard-document-list',
-               'url' => route('contractors.index'),
-               'current' => request()->routeIs('contractors.index')
             ]
         ]
     ];
+
+    if (in_array($userRole, ['accounting_assistant', 'director'])) {
+        $groups[__('Plataform')][] =
+                [
+                   'name' => __('Contractors'),
+                   'icon' => 'clipboard-document-list',
+                   'url' => route('contractors.index'),
+                   'current' => request()->routeIs('contractors.index')
+                ];
+    }
+    if (in_array($userRole, ['director'])) {
+        $groups[__('Plataform')][] =
+                [
+                   'name' => __('Users'),
+                   'icon' => 'user',
+                   'url' => route('users.index'),
+                   'current' => request()->routeIs('users.index')
+                ];
+    }
+
 @endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="dark">

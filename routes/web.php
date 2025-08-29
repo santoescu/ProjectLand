@@ -5,6 +5,7 @@ use App\Livewire\Settings\Password;
 use App\Livewire\Settings\Profile;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ContractorController;
+use App\Http\Controllers\UserController;
 use App\Livewire\Settings\Language;
 
 
@@ -23,7 +24,15 @@ Route::middleware(['auth'])->group(function () {
     Route::get('settings/password', Password::class)->name('settings.password');
     Route::get('settings/appearance', Appearance::class)->name('settings.appearance');
     Route::get('settings/language', Language::class)->name('settings.language');
-    Route::resource('contractors', ContractorController::class);
+
+    Route::middleware(['role:accounting_assistant,director'])->group(function () {
+        Route::resource('contractors', ContractorController::class);
+    });
+
+    Route::middleware(['role:,director'])->group(function () {
+        Route::resource('users', UserController::class);
+    });
+
 });
 
 

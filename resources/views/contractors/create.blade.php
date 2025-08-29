@@ -1,4 +1,4 @@
-<x-layouts.app :title="__('Dashboard')">
+<x-layouts.app :title="__('Contractor')">
 
     @include('partials.tittle', [
     'title' => __("Create :name", ['name' => __('Contractor')]) ,
@@ -8,13 +8,13 @@
     <form method="POST" action="{{ route('contractors.store') }}" class="space-y-4 max-w-xl mx-auto">
         @csrf
 
-        <flux:input label="{{__('Company')}}" name="company_name" required />
+        <flux:input label="{{__('Company')}}" name="company_name" :value="old('company_name')" />
 
-        <flux:input label="{{__('Contact')}}" name="contact_name" required />
+        <flux:input label="{{__('Contact')}}" name="contact_name" :value="old('contact_name')" />
 
-        <flux:input label="{{__('Phone')}}" name="contact_phone" required />
+        <flux:input label="{{__('Phone')}}" name="contact_phone" :value="old('contact_phone')" />
 
-        <flux:select label="{{__('Payment method')}}" name="payment_method" required>
+        <flux:select label="{{__('Payment method')}}" name="payment_method" >
             <option value="Zelle">Zelle</option>
             <option value="ACH">ACH</option>
             <option value="Wire">Wire</option>

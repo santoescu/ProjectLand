@@ -3,10 +3,10 @@
 
     <x-settings.layout :heading="__('Profile')" :subheading="__('Update your name and email address')">
         <form wire:submit="updateProfileInformation" class="my-6 w-full space-y-6">
-            <flux:input wire:model="name" :label="__('Name')" type="text" required autofocus autocomplete="name" />
+            <flux:input wire:model="name" :label="__('Name')" type="text"  autofocus autocomplete="name" />
 
             <div>
-                <flux:input wire:model="email" :label="__('Email')" type="email" required autocomplete="email" />
+                <flux:input wire:model="email" :label="__('Email')" type="email"  autocomplete="email" />
 
                 @if (auth()->user() instanceof \Illuminate\Contracts\Auth\MustVerifyEmail &&! auth()->user()->hasVerifiedEmail())
                     <div>
@@ -26,6 +26,12 @@
                     </div>
                 @endif
             </div>
+
+            <flux:select wire:model="role" label="{{__('Role')}}" name="role"  autocomplete="role" >
+                <option value="accounting_assistant">{{ __('Accounting Assistant') }}</option>
+                <option value="project_manager">{{ __('Project Manager') }}</option>
+                <option value="director">{{ __('Director') }}</option>
+            </flux:select>
 
             <div class="flex items-center gap-4">
                 <div class="flex items-center justify-end">

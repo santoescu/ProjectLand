@@ -10,7 +10,7 @@
             wire:model="email"
             :label="__('Email Address')"
             type="email"
-            required
+
             autofocus
             placeholder="email@example.com"
         />

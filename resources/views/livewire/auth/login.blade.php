@@ -10,7 +10,7 @@
             wire:model="email"
             :label="__('Email address')"
             type="email"
-            required
+
             autofocus
             autocomplete="email"
             placeholder="email@example.com"
@@ -22,7 +22,6 @@
                 wire:model="password"
                 :label="__('Password')"
                 type="password"
-                required
                 autocomplete="current-password"
                 :placeholder="__('Password')"
                 viewable

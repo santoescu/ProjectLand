@@ -14,6 +14,7 @@ class Profile extends Component
     public string $name = '';
 
     public string $email = '';
+    public string $role = '';
 
 
     /**
@@ -21,8 +22,10 @@ class Profile extends Component
      */
     public function mount(): void
     {
-        $this->name = Auth::user()->name;
-        $this->email = Auth::user()->email;
+        $user = Auth::user();
+        $this->name = $user->name;
+        $this->email = $user->email;
+        $this->role = $user->role ?? '';
     }
 
     /**
@@ -41,8 +44,9 @@ class Profile extends Component
                 'lowercase',
                 'email',
                 'max:255',
-                Rule::unique(User::class)->ignore($user->id),
+                Rule::unique(User::class),
             ],
+            'role' => 'required|string|in:accounting_assistant,project_manager,director'
         ]);
 
         $user->fill($validated);

@@ -1,7 +1,7 @@
 <x-layouts.app :title="__('Contractor')">
     @include('partials.tittle', [
         'title' => __('Contractors'),
-        'subheading' => __('Management of registered contractors')
+        'subheading' => __('Management of registered :name',['name'=> __('contractors')])
     ])
 
     <div class="flex flex-col">
@@ -52,9 +52,13 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="5" class="px-6 py-4 text-center text-gray-500">
-                                        {{__('There are no registered contractors.')}}
+                                    <td></td>
+                                    <td></td>
+                                    <td  class="px-6 py-4 text-center text-gray-500">
+                                        {{__('There are no registered :name.',['name'=>__('contractors')])}}
                                     </td>
+                                    <td></td>
+                                    <td></td>
                                 </tr>
                             @endforelse
 
@@ -80,19 +84,19 @@
 
             <div>
                 <flux:heading size="lg">{{ __("Edit :name", ['name' => __('Contractor')]) }}</flux:heading>
-                <flux:text class="mt-2">{{__('Update this contractor\'s details.')}}</flux:text>
+                <flux:text class="mt-2">{{__('Update this :name\'s details.',['name'=>__('contractor')])}}</flux:text>
             </div>
 
-            <flux:input id="company_name" label="{{__('Company')}}" name="company_name" required />
-            <flux:input id="contact_name" label="{{__('Contact')}}" name="contact_name" required />
-            <flux:input id="contact_phone" label="{{__('Phone')}}" name="contact_phone" required />
+            <flux:input id="company_name" label="{{__('Company')}}" name="company_name"  />
+            <flux:input id="contact_name" label="{{__('Contact')}}" name="contact_name"  />
+            <flux:input id="contact_phone" label="{{__('Phone')}}" name="contact_phone"  />
 
-            <flux:select id="payment_method" label="{{__('Payment method')}}" name="payment_method" required>
+            <flux:select id="payment_method" label="{{__('Payment method')}}" name="payment_method" >
                 <option value="Zelle">Zelle</option>
                 <option value="ACH">ACH</option>
                 <option value="Wire">Wire</option>
             </flux:select>
-
+            <div id="formErrors" class="text-red-500 text-sm"></div>
             <div class="flex gap-3">
 
                 <flux:spacer />
@@ -121,27 +125,24 @@
             </div>
             <div class="flex gap-2">
                 <flux:spacer />
-            <!-- Botón cancelar -->
-            <flux:modal.close >
-                <flux:button variant="ghost" x-on:click="$flux.modal('confirm-delete').close()">
-                    {{ __('Cancel') }}
-                </flux:button>
-            </flux:modal.close>
-            <!-- Botón confirmar -->
-            <form id="deleteContractorForm" action="{{ route('contractors.destroy', $contractor->id) }}" method="POST">
-                @csrf
-                @method('DELETE')
-                <flux:button type="submit" variant="danger" icon="archive-box-x-mark">
-                    {{ __('Delete') }}
-                </flux:button>
-            </form>
+                <!-- Botón cancelar -->
+                <flux:modal.close >
+                    <flux:button variant="ghost" x-on:click="$flux.modal('confirm-delete').close()">
+                        {{ __('Cancel') }}
+                    </flux:button>
+                </flux:modal.close>
+                <!-- Botón confirmar -->
+                <form id="deleteContractorForm" action="" method="POST">
+                    @csrf
+                    @method('DELETE')
+                    <flux:button type="submit" variant="danger" icon="archive-box-x-mark">
+                        {{ __('Delete') }}
+                    </flux:button>
+                </form>
+            </div>
         </div>
     </flux:modal>
-    <!-- Formulario de eliminar oculto -->
-    <form id="deleteContractorForm" method="POST" style="display:none">
-        @csrf
-        @method('DELETE')
-    </form>
+
 
     <!-- Script para llenar modal dinámico -->
     <script>
@@ -175,6 +176,41 @@
                 // Conectar tu input Preline al DataTable
                 $('#hs-table-with-pagination-search').on('keyup', function () {
                     table.search(this.value).draw();
+                });
+                $("#editContractorForm").on("submit", function (e) {
+                    e.preventDefault(); // evita reload
+
+                    let form = $(this);
+                    let action = form.attr("action");
+                    let data = form.serialize();
+
+                    $("#formErrors").html("");
+                    $.ajax({
+                        url: action,
+                        method: "POST", // 👈 en vez de PUT
+                        data: data + "&_method=PUT",
+                        success: function (response) {
+                            Flux.modal('edit-contractor').close();
+                            location.reload();
+                            window.dispatchEvent(new CustomEvent('toast', {
+                                detail: {
+                                    type: 'success',
+                                    message: "{{ __("Updated :name", ['name' => __('Contractor')])}}"
+                                }
+                            }));
+                        },
+                        error: function (xhr) {
+
+                            if (xhr.status === 422) {
+                                let errors = xhr.responseJSON.errors;
+                                let errorMessages = Object.values(errors)
+                                    .map(e => e.join("<br>"))
+                                    .join("<br>");
+                                $("#formErrors").html(errorMessages);
+                                Flux.modal('edit-contractor').show();
+                            }
+                        }
+                    });
                 });
             });
         </script>
