@@ -162,9 +162,7 @@
     <!-- Script para llenar modal dinámico -->
     <script>
         function openEditModal(project) {
-            console.log(project.project_id)
             HSSelect.getInstance('#project_id').setValue(project.project_id);
-            console.log(project.project_id)
             document.getElementById('name').value = project.name;
             document.getElementById('editProjectForm').action = `/projects/${project.id}`;
             document.getElementById('deleteProjectForm').action = `/projects/${project.id}` ;

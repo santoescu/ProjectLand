@@ -14,8 +14,9 @@ class ChartAccountController extends Controller
         $query = ChartAccount::query();
 
         $chartAccounts = $query->paginate(10);
+        $rootAccounts = ChartAccount::whereNull('parent_id')->orWhere('parent_id', '')->get();
 
-        return view('chartAccounts.index', compact('chartAccounts'));
+        return view('chartAccounts.index', compact('chartAccounts', 'rootAccounts'));
     }
 
     /**
@@ -23,7 +24,8 @@ class ChartAccountController extends Controller
      */
     public function create()
     {
-        return view('chartAccounts.create');
+        $chartAccounts = ChartAccount::all();
+        return view('chartAccounts.create', compact('chartAccounts'));
     }
 
     /**
@@ -33,10 +35,12 @@ class ChartAccountController extends Controller
     {
         $request->validate([
             'name'   => 'required|string|max:255',
-            'type'   => 'required|string|max:255',
         ]);
 
-        ChartAccount::create($request->all());
+
+        $data = $request->all();
+        $data['parent_id'] = $data['parent_id'] ?? "";
+        ChartAccount::create($data);
         session()->flash('toast', [
             'type' => 'success',
             'message' => __("Created :name", ['name' => __('Chart of Account')])
@@ -54,11 +58,13 @@ class ChartAccountController extends Controller
     {
         $request->validate([
             'name'   => 'required|string|max:255',
-            'type'   => 'required|string|max:255',
+            'parent_id' => 'nullable|not_in:'. $id,
         ]);
 
         $chartAccount = ChartAccount::findOrFail($id);
-        $chartAccount->update($request->all());
+        $data = $request->all();
+        $data['parent_id'] = $data['parent_id'] ?? "";
+        $chartAccount->update($data);
         return redirect()->route('chartAccounts.index');
     }
 
