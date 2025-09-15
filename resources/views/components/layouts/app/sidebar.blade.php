@@ -19,6 +19,13 @@
                    'url' => route('contractors.index'),
                    'current' => request()->routeIs('contractors.index')
                 ];
+         $groups[__('Plataform')][] =
+                [
+                   'name' => __('Projects'),
+                   'icon' => 'home-modern',
+                   'url' => route('projects.index'),
+                   'current' => request()->routeIs('projects.index')
+                ];
     }
     if (in_array($userRole, ['director'])) {
         $groups[__('Plataform')][] =

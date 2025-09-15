@@ -4,7 +4,9 @@ export default {
     content: [
         "./resources/**/*.blade.php",
         "./resources/**/*.js",
-        "./node_modules/preline/dist/*.js"
+        "./resources/**/*.vue",
+        "./node_modules/preline/**/*.js",
+        "./node_modules/@preline/select/**/*.js",
     ],
     theme: {
         extend: {},
