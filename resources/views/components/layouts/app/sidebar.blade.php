@@ -26,6 +26,13 @@
                    'url' => route('projects.index'),
                    'current' => request()->routeIs('projects.index')
                 ];
+         $groups[__('Plataform')][] =
+                [
+                   'name' => __('Charts of Accounts'),
+                   'icon' => 'presentation-chart-line',
+                   'url' => route('chartAccounts.index'),
+                   'current' => request()->routeIs('chartAccounts.index')
+                ];
     }
     if (in_array($userRole, ['director'])) {
         $groups[__('Plataform')][] =
