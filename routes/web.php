@@ -30,7 +30,9 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware(['role:accounting_assistant,director'])->group(function () {
         Route::resource('contractors', ContractorController::class);
         Route::resource('projects', ProjectController::class);
-        Route::resource('chartAccounts', ChartAccountController::class);
+        Route::resource('chartAccounts', ChartAccountController::class)->except(['show']);
+        Route::get('chartAccounts/tree', [ChartAccountController::class, 'tree'])
+            ->name('chartAccounts.tree');
     });
 
     Route::middleware(['role:,director'])->group(function () {

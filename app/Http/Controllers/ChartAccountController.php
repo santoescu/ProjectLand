@@ -13,10 +13,16 @@ class ChartAccountController extends Controller
     {
         $query = ChartAccount::query();
 
-        $chartAccounts = $query->paginate(10);
+        $chartAccounts = $query->paginate(100);
+
+        return view('chartAccounts.index', compact('chartAccounts'));
+    }
+
+    public function tree()
+    {
         $rootAccounts = ChartAccount::whereNull('parent_id')->orWhere('parent_id', '')->get();
 
-        return view('chartAccounts.index', compact('chartAccounts', 'rootAccounts'));
+        return view('chartAccounts.tree', compact( 'rootAccounts'));
     }
 
     /**

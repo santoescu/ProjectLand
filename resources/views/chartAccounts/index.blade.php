@@ -1,92 +1,74 @@
 <x-layouts.app :title="__('Chart of Account')">
     @include('partials.tittle', [
         'title' => __('Charts of Accounts'),
-        'subheading' => __('Management of registered :name',['name'=> __('charts of accounts')])
+        'subheading' => __('Management of registered :name',['name'=> __('charts of accounts')]),
+        'button' => [
+        'label' => __('Tree'),
+        'route' => route('chartAccounts.tree')
+    ]
     ])
-
-    <flux:navbar>
-        <flux:navbar.item href="javascript:void(0)" onclick="showView('tree')" id="navTree" class="bg-gray-100 dark:bg-neutral-700">
-            {{ __('Tree') }}
-        </flux:navbar.item>
-        <flux:navbar.item href="javascript:void(0)" onclick="showView('table')" id="navTable">
-            {{ __('Table') }}
-        </flux:navbar.item>
-    </flux:navbar>
-
     <!-- Contenido principal -->
     <main class="flex-1 p-6 overflow-y-auto">
-
-        <!-- Vista árbol -->
-        <div id="treeView" >
-            <ul class="space-y-2">
-                @foreach($rootAccounts as $account)
-                    @include('partials.node', ['account' => $account])
-                @endforeach
-            </ul>
-        </div>
-        <!-- Vista tabla -->
-        <div id="tableView" class="hidden">
-            <div class="flex flex-col">
-                <div class="-m-1.5 overflow-x-auto">
-                    <div class="p-1.5 min-w-full inline-block align-middle">
-                        <div class="border border-gray-200 rounded-lg divide-y divide-gray-200 dark:border-neutral-700 dark:divide-neutral-700">
-                            <div class="py-3 px-4 flex justify-between items-center gap-4">
-                                <div class="relative max-w-xs">
-                                    <label class="sr-only">{{__('Search')}}</label>
-                                    <flux:input name="hs-table-with-pagination-search" id="hs-table-with-pagination-search"  icon="magnifying-glass" placeholder="{{__('Search')}}"/>
-                                </div>
-
-                                <a href="{{ route('chartAccounts.create') }}">
-                                    <flux:button variant="filled" icon="plus">{{__('New')}}</flux:button>
-                                </a>
-                            </div>
-                            <div class="overflow-hidden">
-                                <table class="min-w-full divide-y divide-gray-200 dark:divide-neutral-700"  id="chartAccountsTable">
-                                    <thead class="bg-gray-50 dark:bg-neutral-700">
-                                    <tr>
-
-                                        <th scope="col" class="px-6 py-3 text-start text-xs font-medium text-gray-500 uppercase dark:text-neutral-500">{{__('Name')}}</th>
-                                        <th scope="col" class="px-6 py-3 text-start text-xs font-medium text-gray-500 uppercase dark:text-neutral-500">{{__('Parent')}}</th>
-                                        <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase dark:text-neutral-500">{{__('Actions')}}</th>
-                                    </tr>
-                                    </thead>
-                                    <tbody class="divide-y divide-gray-200 dark:divide-neutral-700">
-                                    @forelse($chartAccounts as $chartAccount)
-                                        <tr >
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800 dark:text-neutral-200">{{ $chartAccount->name }}</td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800 dark:text-neutral-200">{{ $chartAccount->name_parent }}</td>
-                                            <td class="px-6 py-4 flex justify-center gap-2">
-                                                <!-- Botón Editar -->
-                                                <flux:modal.trigger name="edit-chartAccount">
-                                                    <flux:button
-                                                        size="sm"
-                                                        variant="primary"
-                                                        icon="pencil-square"
-                                                        onclick='openEditModal({{$chartAccount}})'>
-                                                    </flux:button>
-
-                                                </flux:modal.trigger>
-                                            </td>
-                                        </tr>
-                                    @empty
-                                        <tr>
-                                            <td></td>
-                                            <td class="px-6 py-4 text-center text-gray-500">
-                                                {{ __('There are no registered :name.', ['name'=>__('charts of accounts')]) }}
-                                            </td>
-                                            <td></td>
-                                        </tr>
-                                    @endforelse
-
-
-                                    </tbody>
-                                </table>
-                            </div>
-                            <div class="py-1 px-4">
-                                {{ $chartAccounts->links() }}
+        <div class="flex flex-col">
+            <div class="-m-1.5 overflow-x-auto">
+                <div class="p-1.5 min-w-full inline-block align-middle">
+                    <div class="border border-gray-200 rounded-lg divide-y divide-gray-200 dark:border-neutral-700 dark:divide-neutral-700">
+                        <div class="py-3 px-4 flex justify-between items-center gap-4">
+                            <div class="relative max-w-xs">
+                                <label class="sr-only">{{__('Search')}}</label>
+                                <flux:input name="hs-table-with-pagination-search" id="hs-table-with-pagination-search"  icon="magnifying-glass" placeholder="{{__('Search')}}"/>
                             </div>
 
+                            <a href="{{ route('chartAccounts.create') }}">
+                                <flux:button variant="filled" icon="plus">{{__('New')}}</flux:button>
+                            </a>
                         </div>
+                        <div class="overflow-hidden">
+                            <table class="min-w-full divide-y divide-gray-200 dark:divide-neutral-700"  id="chartAccountsTable">
+                                <thead class="bg-gray-50 dark:bg-neutral-700">
+                                <tr>
+
+                                    <th scope="col" class="px-6 py-3 text-start text-xs font-medium text-gray-500 uppercase dark:text-neutral-500">{{__('Name')}}</th>
+                                    <th scope="col" class="px-6 py-3 text-start text-xs font-medium text-gray-500 uppercase dark:text-neutral-500">{{__('Parent')}}</th>
+                                    <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase dark:text-neutral-500">{{__('Actions')}}</th>
+                                </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-200 dark:divide-neutral-700">
+                                @forelse($chartAccounts as $chartAccount)
+                                    <tr >
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800 dark:text-neutral-200">{{ $chartAccount->name }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800 dark:text-neutral-200">{{ $chartAccount->name_parent }}</td>
+                                        <td class="px-6 py-4 flex justify-center gap-2">
+                                            <!-- Botón Editar -->
+                                            <flux:modal.trigger name="edit-chartAccount">
+                                                <flux:button
+                                                    size="sm"
+                                                    variant="primary"
+                                                    icon="pencil-square"
+                                                    onclick='openEditModal({{$chartAccount}})'>
+                                                </flux:button>
+
+                                            </flux:modal.trigger>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td></td>
+                                        <td class="px-6 py-4 text-center text-gray-500">
+                                            {{ __('There are no registered :name.', ['name'=>__('charts of accounts')]) }}
+                                        </td>
+                                        <td></td>
+                                    </tr>
+                                @endforelse
+
+
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="py-1 px-4">
+                            {{ $chartAccounts->links() }}
+                        </div>
+
                     </div>
                 </div>
             </div>
@@ -227,6 +209,7 @@
                 // Inicializamos DataTable
                 let table = $('#chartAccountsTable').DataTable({
                     dom: '',
+                    pageLength: 100,
                     language: {
                         zeroRecords: "{{__("No matching records found")}}",
 
