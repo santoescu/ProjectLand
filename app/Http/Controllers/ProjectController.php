@@ -34,12 +34,21 @@ class ProjectController extends Controller
      */
     public function store(Request $request)
     {
+
         $request->validate([
             'name'   => 'required|string|max:255',
-
+            'subprojects' => 'nullable|array',
+            'subprojects.*' => 'nullable|string|max:255',
         ]);
         $data = $request->all();
-        $data['project_id'] = $data['project_id'] ?? "";
+
+        if ($request->has('subprojects')) {
+
+            $data['subprojects'] = collect($data['subprojects'])
+                ->filter(fn($item) => !is_null($item) && trim($item) !== '')
+                ->values()
+                ->toArray();
+        }
         Project::create($data);
         session()->flash('toast', [
             'type' => 'success',
@@ -58,12 +67,21 @@ class ProjectController extends Controller
 
         $request->validate([
             'name'   => 'required|string|max:255',
-            'project_id' => 'nullable|not_in:'. $id,
+            'subprojects' => 'nullable|array',
+            'subprojects.*' => 'nullable|string|max:255',
         ]);
 
         $project = Project::findOrFail($id);
         $data = $request->all();
-        $data['project_id'] = $data['project_id'] ?? "";
+
+
+        if ($request->has('subprojects')) {
+
+            $data['subprojects'] = collect($data['subprojects'])
+                ->filter(fn($item) => !is_null($item) && trim($item) !== '')
+                ->values()
+                ->toArray();
+        }
         $project->update($data);
         return redirect()->route('projects.index');
     }

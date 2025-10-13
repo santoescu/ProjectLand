@@ -11,17 +11,16 @@ class Project extends Model
 
     protected $fillable = [
         'name',
-        'project_id',
+        'subprojects',
     ];
 
     public function getNameSubProjectAttribute()
     {
-        if (! $this->project_id) {
-            return "";
+
+        if (empty($this->subprojects) || !is_array($this->subprojects)) {
+            return '';
         }
 
-        $subProject = self::find($this->project_id);
-
-        return $subProject ? $subProject->name : "";
+        return implode('; ', $this->subprojects);
     }
 }

@@ -6,6 +6,7 @@
         "dev": "vite"
     },
     "dependencies": {
+        "@preline/copy-markup": "^3.2.3",
         "@preline/select": "^3.2.3",
         "@tailwindcss/vite": "^4.1.11",
         "alpinejs": "^3.14.9",

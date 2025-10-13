@@ -12,4 +12,4 @@
         </a>
     @endisset
 </div>
-<flux:separator variant="subtle" />
+<flux:separator variant="subtle" class="mb-6" />
