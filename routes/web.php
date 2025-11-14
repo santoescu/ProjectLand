@@ -8,6 +8,7 @@ use App\Http\Controllers\ContractorController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ChartAccountController;
+use App\Http\Controllers\PayController;
 use App\Livewire\Settings\Language;
 
 
@@ -38,6 +39,15 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware(['role:,director'])->group(function () {
         Route::resource('users', UserController::class);
     });
+
+    Route::middleware(['role:,director,accounting_assistant,project_manager'])->group(function () {
+        Route::resource('pays', PayController::class);
+    });
+
+    Route::get('/pays/{id}/status/{status}/{user_id}', [PayController::class, 'updateStatus'])->name('pays.updateStatus');
+
+    Route::get('/pays/{id}/{user_id}', [PayController::class, 'updatePay'])->name('pays.updatePay');
+    Route::put('/pays/{id}/{user_id}/update', [PayController::class, 'updateEmail'])->name('pays.updateEmail');
 
 });
 

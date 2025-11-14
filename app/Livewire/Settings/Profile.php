@@ -44,7 +44,7 @@ class Profile extends Component
                 'lowercase',
                 'email',
                 'max:255',
-                Rule::unique(User::class),
+                Rule::unique(User::class)->ignore($user->id),
             ],
             'role' => 'required|string|in:accounting_assistant,project_manager,director'
         ]);
@@ -69,7 +69,7 @@ class Profile extends Component
         $user = Auth::user();
 
         if ($user->hasVerifiedEmail()) {
-            $this->redirectIntended(default: route('dashboard', absolute: false));
+            $this->redirectIntended(default: route('pays.index', absolute: false));
 
             return;
         }

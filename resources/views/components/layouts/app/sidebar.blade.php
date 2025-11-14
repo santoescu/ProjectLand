@@ -3,10 +3,10 @@
     $groups = [
         __('Plataform') =>[
             [
-               'name' => __('Dashboard'),
-               'icon' => 'home',
-               'url' => route('dashboard'),
-               'current' => request()->routeIs('dashboard')
+               'name' => __('Pays'),
+               'icon' => 'currency-dollar',
+               'url' => route('pays.index'),
+               'current' => request()->routeIs('pays.index')
             ]
         ]
     ];
