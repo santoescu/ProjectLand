@@ -15,8 +15,8 @@
 
 @vite(['resources/css/app.css', 'resources/js/app.js'])
 
-<!-- Flux desde CDN -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fluxui@latest/dist/flux.min.css">
-<script src="https://cdn.jsdelivr.net/npm/fluxui@latest/dist/flux.min.js"></script>
+{{-- CSS y JS compilados por Vite, servidos directamente --}}
+<link rel="stylesheet" href="{{ asset('build/assets/app-w1ZZpO4E.css') }}">
+<script src="{{ asset('build/assets/app-Bbdxlwnq.js') }}"></script>
 
 @fluxAppearance
