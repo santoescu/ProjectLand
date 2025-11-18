@@ -11,6 +11,12 @@
 <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" rel="stylesheet" />
 @livewireStyles
 @vite(['resources/css/app.css', 'resources/js/app.js'])
-<link rel="stylesheet" href="{{ asset('vendor/livewire/flux/dist/flux.css') }}">
+
+<!-- Assets oficiales de Flux desde CDN -->
+<link rel="stylesheet" href="https://unpkg.com/@livewire/flux@latest/dist/flux.css">
+<script defer src="https://unpkg.com/@livewire/flux@latest/dist/flux.js"></script>
+
+@fluxAppearance
+
 @fluxAppearance
 
