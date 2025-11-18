@@ -12,8 +12,6 @@ COPY resources ./resources
 RUN npm install
 RUN npm run build
 
-
-
 ###############################################
 # STAGE 2: Imagen PHP + Laravel
 ###############################################
@@ -42,7 +40,7 @@ COPY --from=composer:2.7 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
 
-# Copiar resto del proyecto
+# Copiar proyecto completo
 COPY . .
 
 # Copiar assets construidos desde el Stage 1
@@ -50,6 +48,12 @@ COPY --from=build-assets /app/public/build ./public/build
 
 # Instalar dependencias de Laravel
 RUN composer install --no-interaction --prefer-dist --optimize-autoloader
+
+# Limpiar caches de Laravel para evitar errores de closures
+RUN php artisan view:clear \
+    && php artisan cache:clear \
+    && php artisan config:clear \
+    && php artisan route:clear
 
 # Permisos
 RUN chmod -R 777 storage bootstrap/cache
