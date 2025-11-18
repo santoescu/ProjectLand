@@ -15,7 +15,6 @@
 {{-- Assets compilados con Vite --}}
 @vite(['resources/css/app.css', 'resources/js/app.js'])
 
-{{-- Flux si lo quieres cargar desde public --}}
-<script src="{{ asset('vendor/flux/flux.min.js') }}"></script>
+
 
 @fluxAppearance
