@@ -4,8 +4,8 @@
     <!-- Session Status -->
     <x-auth-session-status class="text-center" :status="session('status')" />
 
-    <form method="POST" wire:submit="login" class="flex flex-col gap-6">
-        <!-- Email Address -->
+    <form wire:submit.prevent="login" class="flex flex-col gap-6">
+    <!-- Email Address -->
         <flux:input
             wire:model="email"
             :label="__('Email address')"
