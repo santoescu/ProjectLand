@@ -15,6 +15,8 @@
 
 @vite(['resources/css/app.css', 'resources/js/app.js'])
 
-
+<!-- Flux desde CDN -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fluxui@latest/dist/flux.min.css">
+<script src="https://cdn.jsdelivr.net/npm/fluxui@latest/dist/flux.min.js"></script>
 
 @fluxAppearance
