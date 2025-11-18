@@ -8,14 +8,14 @@ use Illuminate\Http\Middleware\TrustProxies as Middleware;
 class TrustProxies extends Middleware
 {
     /**
-     * The trusted proxies for this application.
+     * Trust ALL proxies (Cloud Run runs behind Google Frontend proxy).
      *
      * @var array|string|null
      */
-    protected $proxies = '*'; // Confía en todos los proxies (Cloud Run funciona detrás de proxy)
+    protected $proxies = '*';
 
     /**
-     * The headers that should be used to detect proxies.
+     * Use all forwarded headers
      *
      * @var int
      */
