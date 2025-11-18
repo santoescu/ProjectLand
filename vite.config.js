@@ -12,6 +12,7 @@ export default defineConfig({
         }),
         tailwindcss(),
     ],
+    base: '/',
     server: {
         cors: true,
     },
