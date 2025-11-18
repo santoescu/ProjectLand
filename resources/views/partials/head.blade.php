@@ -13,9 +13,12 @@
 @livewireStyles
 
 
-
+@vite(['resources/js/app.js'])
 {{-- CSS y JS compilados por Vite, servidos directamente --}}
 <link rel="stylesheet" href="{{ asset('build/assets/app-DEb_C6QJ.css') }}">
 <script src="{{ asset('build/assets/app-D1NYs5aq.js') }}"></script>
+
+{{-- Flux --}}
+<script src="{{ asset('vendor/flux/flux.min.js') }}"></script>
 
 @fluxAppearance
