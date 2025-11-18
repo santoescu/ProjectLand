@@ -15,9 +15,13 @@ RUN apt-get update && apt-get install -y \
     pkg-config \
     && docker-php-ext-install pdo_mysql mbstring zip exif pcntl bcmath gd
 
-# ➕ Instalar la extensión de MongoDB (OBLIGATORIO)
+# Instalar la extensión de MongoDB (OBLIGATORIO)
 RUN pecl install mongodb \
-    && echo "extension=mongodb.so" > /usr/local/etc/php/conf.d/mongodb.ini
+    && echo "extension=mongodb.so" > /usr/local/etc/php/conf.d/mongodb.ini \
+
+# Instalar Node.js 18 (NECESARIO PARA VITE)
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
+    && apt-get install -y nodejs
 
 # Instalar Composer
 COPY --from=composer:2.7 /usr/bin/composer /usr/bin/composer
@@ -30,6 +34,10 @@ COPY . .
 
 # Instalar dependencias de Laravel
 RUN composer install --no-interaction --prefer-dist --optimize-autoloader
+
+# Instalar dependencias JS y construir Vite
+RUN npm install
+RUN npm run build
 
 # Permisos
 RUN chmod -R 777 storage bootstrap/cache
