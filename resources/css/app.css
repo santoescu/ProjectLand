@@ -1,5 +1,6 @@
 @import 'tailwindcss';
-@import '../../vendor/livewire/flux/dist/flux.css';
+@import './vendor/flux.css';
+
 
 /* Preline UI */
 @import "../../node_modules/preline/variants.css";
