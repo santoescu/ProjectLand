@@ -43,9 +43,6 @@ WORKDIR /var/www/html
 # Copiar proyecto completo
 COPY . .
 
-# Copiar carpeta flux al contenedor
-COPY public/flux ./public/flux
-
 
 # Copiar assets construidos desde el Stage 1
 COPY --from=build-assets /app/public/build ./public/build
