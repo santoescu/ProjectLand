@@ -17,7 +17,7 @@ RUN apt-get update && apt-get install -y \
     npm \
     && docker-php-ext-install mbstring zip exif pcntl bcmath gd
 
-# Instalar extensión MongoDB
+# Extensión MongoDB
 RUN pecl install mongodb \
     && echo "extension=mongodb.so" > /usr/local/etc/php/conf.d/mongodb.ini
 
@@ -27,28 +27,24 @@ COPY --from=composer:2.7 /usr/bin/composer /usr/bin/composer
 # Directorio de la app
 WORKDIR /var/www/html
 
-# Copiar archivos del proyecto
+# Copiar proyecto
 COPY . .
 
-# Instalar dependencias Laravel
+# Instalar dependencias PHP
 RUN composer install --no-interaction --prefer-dist --optimize-autoloader
 
-# Instalar dependencias NPM
+# Instalar dependencias JS y generar build
 RUN npm install
-
-# Construir Vite
 RUN npm run build
 
-# ➕ Generar assets de Flux
-RUN php artisan flux:install --force
-RUN php artisan flux:generate --force
-RUN php artisan vendor:publish --tag=flux-assets --force
+# Publicar assets de Flux
+RUN php artisan flux:publish --force
 
-# Dar permisos
+# Permisos
 RUN chmod -R 777 storage bootstrap/cache public/flux
 
 # Exponer puerto Cloud Run
 EXPOSE 8080
 
-# Servidor PHP embebido
+# Ejecutar servidor embebido de PHP
 CMD php -S 0.0.0.0:8080 -t public
