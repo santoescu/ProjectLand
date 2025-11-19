@@ -15,6 +15,6 @@
 
 {{-- CSS y JS compilados por Vite, servidos directamente --}}
 <link rel="stylesheet" href="{{ asset('build/assets/app-w1ZZpO4E.css') }}">
-<script src="{{ asset('build/assets/app-Bbdxlwnq.js') }}"></script>
+<script src="{{ asset('build/assets/app-CpU8mKXY.js') }}"></script>
 
 @fluxAppearance
