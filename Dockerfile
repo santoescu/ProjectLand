@@ -43,7 +43,7 @@ WORKDIR /var/www/html
 COPY . .
 
 # Copiar assets construidos
-#COPY --from=build-assets /app/public/build ./public/build
+COPY --from=build-assets /app/public/build ./public/build
 
 RUN composer install --no-interaction --prefer-dist --optimize-autoloader
 
