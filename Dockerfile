@@ -27,24 +27,23 @@ COPY --from=composer:2.7 /usr/bin/composer /usr/bin/composer
 # Directorio de la app
 WORKDIR /var/www/html
 
-# Copiar proyecto
+# Copiar archivos del proyecto
 COPY . .
 
 # Instalar dependencias PHP
 RUN composer install --no-interaction --prefer-dist --optimize-autoloader
 
-# Instalar dependencias JS y generar build
+# Instalar dependencias JS
 RUN npm install
+
+# Construir assets (incluye Flux porque está integrado en Vite)
 RUN npm run build
 
-# Publicar assets de Flux
-RUN php artisan flux:publish --force
+# Dar permisos
+RUN chmod -R 777 storage bootstrap/cache
 
-# Permisos
-RUN chmod -R 777 storage bootstrap/cache public/flux
-
-# Exponer puerto Cloud Run
+# Exponer puerto para Cloud Run
 EXPOSE 8080
 
-# Ejecutar servidor embebido de PHP
+# Servidor embebido
 CMD php -S 0.0.0.0:8080 -t public
