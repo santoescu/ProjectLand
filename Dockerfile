@@ -9,7 +9,7 @@ COPY package.json package-lock.json vite.config.js ./
 COPY resources ./resources
 
 RUN npm install
-#RUN npm run build
+RUN npm run build
 
 
 
@@ -44,7 +44,7 @@ WORKDIR /var/www/html
 COPY . .
 
 # Copiar assets construidos
-#COPY --from=build-assets /app/public/build ./public/build
+COPY --from=build-assets /app/public/build ./public/build
 
 RUN composer install --no-interaction --prefer-dist --optimize-autoloader
 
