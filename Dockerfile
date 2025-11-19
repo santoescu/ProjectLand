@@ -10,7 +10,7 @@ COPY package.json package-lock.json vite.config.js ./
 COPY resources ./resources
 
 RUN npm install
-RUN npm run build
+
 
 ###############################################
 # STAGE 2: Imagen PHP + Laravel
@@ -50,6 +50,7 @@ COPY --from=build-assets /app/public/build ./public/build
 # Instalar dependencias de Laravel
 RUN composer install --no-interaction --prefer-dist --optimize-autoloader
 
+RUN npm run build
 # Limpiar caches de Laravel para evitar errores de closures
 RUN php artisan view:clear \
     && php artisan cache:clear \
