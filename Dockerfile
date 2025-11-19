@@ -8,6 +8,9 @@ WORKDIR /app
 COPY package.json package-lock.json vite.config.js ./
 COPY resources ./resources
 
+# Copiar flux.css para que Vite pueda importarlo
+COPY vendor/livewire/flux/dist/flux.css ./vendor/livewire/flux/dist/flux.css
+
 RUN npm install
 RUN npm run build
 
