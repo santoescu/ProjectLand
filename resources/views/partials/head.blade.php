@@ -10,10 +10,11 @@
 <link rel="preconnect" href="https://fonts.bunny.net">
 <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" rel="stylesheet" />
 
+<!-- Livewire Styles -->
 @livewireStyles
 
-{{-- CSS y JS compilados por Vite, servidos directamente --}}
-<link rel="stylesheet" href="{{ asset('build/assets/app-DEb_C6QJ.css') }}">
-<script src="{{ asset('build/assets/app-Bbdxlwnq.js') }}"></script>
+<!-- Vite CSS & JS -->
+@vite(['resources/css/app.css', 'resources/js/app.js'])
 
+<!-- Flux Appearance -->
 @fluxAppearance
