@@ -1,27 +1,8 @@
-###############################################
-# STAGE 1: Construcción de assets con Node
-###############################################
-FROM node:18 AS build-assets
-
-WORKDIR /app
-
-COPY package.json package-lock.json vite.config.js ./
-COPY resources ./resources
-
-# Copiar flux.css para que Vite pueda importarlo
-COPY resources/css/flux/flux.css ./resources/css/flux/flux.css
-
-
-RUN npm install
-RUN npm run build
-
-
-
-###############################################
-# STAGE 2: Imagen PHP + Laravel
-###############################################
+# Imagen base con PHP 8.2 + extensiones necesarias
+# Imagen base PHP 8.2
 FROM php:8.2-fpm
 
+# Instalar dependencias del sistema
 RUN apt-get update && apt-get install -y \
     git \
     curl \
@@ -35,30 +16,32 @@ RUN apt-get update && apt-get install -y \
     pkg-config \
     && docker-php-ext-install mbstring zip exif pcntl bcmath gd
 
-# Extensión MongoDB
-RUN pecl install mongodb && \
-    echo "extension=mongodb.so" > /usr/local/etc/php/conf.d/mongodb.ini
+# ➕ Instalar la extensión de MongoDB (OBLIGATORIO)
+RUN pecl install mongodb \
+    && echo "extension=mongodb.so" > /usr/local/etc/php/conf.d/mongodb.ini
 
-# Composer
+# Instalar Composer
 COPY --from=composer:2.7 /usr/bin/composer /usr/bin/composer
 
+# Crear carpeta de la app
+# Directorio de la app
 WORKDIR /var/www/html
 
-# Proyecto Laravel
+# Copiar archivos del proyecto
 COPY . .
 
-# Copiar assets construidos
-COPY --from=build-assets /app/public/build ./public/build
-
+# Instalar dependencias de Laravel
 RUN composer install --no-interaction --prefer-dist --optimize-autoloader
 
-RUN php artisan view:clear \
-    && php artisan cache:clear \
-    && php artisan config:clear \
-    && php artisan route:clear
-
+# Dar permisos a storage y cache
+# Permisos
 RUN chmod -R 777 storage bootstrap/cache
 
+# Exponer puerto para Cloud Run
+# Puerto para Cloud Run
 EXPOSE 8080
 
+# Servidor PHP embebido
+# Servidor embebido
 CMD php -S 0.0.0.0:8080 -t public
+
