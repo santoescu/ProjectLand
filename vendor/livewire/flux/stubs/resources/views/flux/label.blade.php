@@ -1,3 +1,5 @@
+@blaze
+
 @props([
     'badge' => null,
     'aside' => null,

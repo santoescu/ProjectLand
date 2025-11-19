@@ -1,3 +1,5 @@
+@blaze
+
 @props([
     'shortcut' => null,
     'name' => null,

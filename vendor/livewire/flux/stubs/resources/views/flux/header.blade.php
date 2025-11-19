@@ -1,3 +1,5 @@
+@blaze
+
 @props([
     'sticky' => null,
     'container' => null,

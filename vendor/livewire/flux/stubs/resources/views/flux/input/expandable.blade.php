@@ -1,3 +1,5 @@
+@blaze
+
 @php
 $attributes = $attributes->merge([
     'variant' => 'subtle',
