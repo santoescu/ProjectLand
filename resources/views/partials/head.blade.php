@@ -11,9 +11,8 @@
 <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" rel="stylesheet" />
 
 @livewireStyles
+@vite(['resources/css/app.css', 'resources/js/app.js'])
 
-{{-- CSS y JS compilados por Vite, servidos directamente --}}
-<link rel="stylesheet" href="{{ asset('build/assets/app-DEb_C6QJ.css') }}">
 
 
 @fluxAppearance
