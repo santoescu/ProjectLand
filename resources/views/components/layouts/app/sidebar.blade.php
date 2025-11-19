@@ -170,6 +170,11 @@
         </flux:header>
 
         {{ $slot }}
+
+        <!-- Livewire Scripts -->
+        @livewireScripts
+
+        <!-- Flux Scripts -->
         @fluxScripts
     </body>
 
