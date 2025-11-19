@@ -9,6 +9,7 @@ COPY package.json package-lock.json vite.config.js ./
 COPY resources ./resources
 
 RUN npm install
+RUN npm run build
 
 
 ###############################################
@@ -33,14 +34,16 @@ RUN apt-get update && apt-get install -y \
 RUN pecl install mongodb && \
     echo "extension=mongodb.so" > /usr/local/etc/php/conf.d/mongodb.ini
 
+# Composer
 COPY --from=composer:2.7 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
 
+# Proyecto Laravel
 COPY . .
 
-# Copiar assets del build
-COPY --from=build-assets /app/public/build ./public/build
+# Copiar assets construidos
+#COPY --from=build-assets /app/public/build ./public/build
 
 RUN composer install --no-interaction --prefer-dist --optimize-autoloader
 
