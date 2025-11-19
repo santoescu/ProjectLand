@@ -1,7 +1,24 @@
-# Imagen base PHP 8.2
+# =========================
+#  Etapa 1: Build de assets
+# =========================
+FROM node:18 AS build
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm install
+
+COPY . .
+
+# Construir assets con Vite (incluye Flux)
+RUN npm run build
+
+
+# =========================
+#  Etapa 2: PHP + Composer
+# =========================
 FROM php:8.2-fpm
 
-# Dependencias del sistema
 RUN apt-get update && apt-get install -y \
     git \
     curl \
@@ -19,20 +36,24 @@ RUN apt-get update && apt-get install -y \
 RUN pecl install mongodb \
     && echo "extension=mongodb.so" > /usr/local/etc/php/conf.d/mongodb.ini
 
-# Instalar Composer (por si Laravel lo usa en runtime)
+# Composer
 COPY --from=composer:2.7 /usr/bin/composer /usr/bin/composer
 
-# Crear directorio
 WORKDIR /var/www/html
 
-# Copiar TODO el proyecto incluido vendor y node_modules build
+# Copiar proyecto completo
 COPY . .
 
-# Dar permisos
+# Copiar assets compilados desde la etapa 1
+COPY --from=build /app/public ./public
+
+# Instalar dependencias PHP optimizadas
+RUN composer install --no-interaction --prefer-dist --optimize-autoloader
+
+# Permisos
 RUN chmod -R 777 storage bootstrap/cache
 
-# Exponer puerto
 EXPOSE 8080
 
-# Servidor de Laravel
+# Servidor embebido para Cloud Run
 CMD php -S 0.0.0.0:8080 -t public
