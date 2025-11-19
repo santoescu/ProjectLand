@@ -1,3 +1,4 @@
+@blaze
 
 <ui-close data-flux-modal-close>
     {{ $slot }}

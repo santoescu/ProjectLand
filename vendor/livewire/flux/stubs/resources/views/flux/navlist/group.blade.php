@@ -1,3 +1,5 @@
+@blaze
+
 @props([
     'expandable' => false,
     'expanded' => true,

@@ -1,6 +1,8 @@
-@php $iconTrailing = $iconTrailing ??= $attributes->pluck('icon:trailing'); @endphp
-@php $iconLeading = $iconLeading ??= $attributes->pluck('icon:leading'); @endphp
-@php $iconVariant = $iconVariant ??= $attributes->pluck('icon:variant'); @endphp
+@blaze
+
+@php $iconTrailing ??= $attributes->pluck('icon:trailing'); @endphp
+@php $iconLeading ??= $attributes->pluck('icon:leading'); @endphp
+@php $iconVariant ??= $attributes->pluck('icon:variant'); @endphp
 
 @props([
     'iconTrailing' => null,
@@ -9,6 +11,7 @@
     'iconLeading' => null,
     'type' => 'button',
     'loading' => null,
+    'align' => 'center',
     'size' => 'base',
     'square' => null,
     'color' => null,
@@ -61,10 +64,15 @@ if ($loading && $type !== 'submit' && ! $isJsMethod) {
 $classes = Flux::classes()
     ->add('relative items-center font-medium justify-center gap-2 whitespace-nowrap')
     ->add('disabled:opacity-75 dark:disabled:opacity-75 disabled:cursor-default disabled:pointer-events-none')
-    ->add(match ($size) { // Size...    
+    ->add(match ($align) {
+        'start' => 'justify-start',
+        'center' => 'justify-center',
+        'end' => 'justify-end',
+    })
+    ->add(match ($size) { // Size...
         'base' => 'h-10 text-sm rounded-lg' . ' ' . (
-            $square 
-                ? 'w-10' 
+            $square
+                ? 'w-10'
                 // If we have an icon, we want to reduce the padding on the side that has the icon...
                 : ($iconLeading && $iconLeading !== '' ? 'ps-3' : 'ps-4') . ' ' . ($iconTrailing && $iconTrailing !== '' ? 'pe-3' : 'pe-4')
         ),
@@ -124,9 +132,9 @@ $classes = Flux::classes()
     })
     ->add($loading ? [ // Loading states...
         '*:transition-opacity',
-        $type === 'submit' ? '[&[disabled]>:not([data-flux-loading-indicator])]:opacity-0' : '[&[data-flux-loading]>:not([data-flux-loading-indicator])]:opacity-0',
-        $type === 'submit' ? '[&[disabled]>[data-flux-loading-indicator]]:opacity-100' : '[&[data-flux-loading]>[data-flux-loading-indicator]]:opacity-100',
-        $type === 'submit' ? '[&[disabled]]:pointer-events-none' : 'data-flux-loading:pointer-events-none',
+        $type === 'submit' ? '[&[disabled]>:not([data-flux-loading-indicator])]:opacity-0' : '[&[data-loading]>:not([data-flux-loading-indicator])]:opacity-0 [&[data-flux-loading]>:not([data-flux-loading-indicator])]:opacity-0',
+        $type === 'submit' ? '[&[disabled]>[data-flux-loading-indicator]]:opacity-100' : '[&[data-loading]>[data-flux-loading-indicator]]:opacity-100 [&[data-flux-loading]>[data-flux-loading-indicator]]:opacity-100',
+        $type === 'submit' ? '[&[disabled]]:pointer-events-none' : 'data-loading:pointer-events-none data-flux-loading:pointer-events-none',
     ] : [])
     ->add($variant === 'primary' ? match ($color) {
         'slate' => '[--color-accent:var(--color-slate-800)] [--color-accent-content:var(--color-slate-800)] [--color-accent-foreground:var(--color-white)] dark:[--color-accent:var(--color-white)] dark:[--color-accent-content:var(--color-white)] dark:[--color-accent-foreground:var(--color-slate-800)]',
@@ -162,7 +170,7 @@ $classes = Flux::classes()
 @endphp
 
 <flux:with-tooltip :$attributes>
-    <flux:button-or-link :$type :attributes="$attributes->class($classes)" data-flux-button>
+    <flux:button-or-link-pure :$type :attributes="$attributes->class($classes)" data-flux-button>
         <?php if ($loading): ?>
             <div class="absolute inset-0 flex items-center justify-center opacity-0" data-flux-loading-indicator>
                 <flux:icon icon="loading" :variant="$iconVariant" :class="$iconClasses" />
@@ -194,5 +202,5 @@ $classes = Flux::classes()
         <?php elseif ($iconTrailing): ?>
             {{ $iconTrailing }}
         <?php endif; ?>
-    </flux:button-or-link>
+    </flux:button-or-link-pure>
 </flux:with-tooltip>

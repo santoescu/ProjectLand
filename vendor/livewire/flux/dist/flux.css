@@ -15,6 +15,14 @@
     }
 }
 
+@keyframes flux-shimmer {
+    0% {
+        transform: translateX(0%);
+    }
+    100% {
+        transform: translateX(200%);
+    }
+}
 
 *:has(>[data-flux-main]) {
     display: grid;
@@ -98,6 +106,13 @@ select[data-flux-select-native]:hover:not(:disabled) {
 }
 
 /**
+Button styles...
+*/
+ui-button {
+    display: block;
+}
+
+/**
 Toast styles...
 */
 ui-toast {
@@ -132,12 +147,12 @@ ui-toast {
     [data-flux-toast-dialog] {
         opacity: 0;
         transform: translate(0);
-        transition: all 0.35s allow-discrete;
+        transition: opacity 0.35s allow-discrete, transform 0.35s allow-discrete, height 0.35s allow-discrete;
 
         &.showing {
             opacity: 1;
             transform: translate(0);
-            transition: all 0.2s allow-discrete;
+            transition: opacity 0.2s allow-discrete, transform 0.2s allow-discrete, height 0.2s allow-discrete;
         }
     }
 
@@ -211,7 +226,7 @@ ui-toast-group {
     [data-flux-toast-dialog] {
         position: absolute;
         transform: translate(0);
-        transition: all 0.35s allow-discrete;
+        transition: opacity 0.35s allow-discrete, transform 0.35s allow-discrete, height 0.35s allow-discrete;
 
         [position*="top"] & {
             top: 0;
@@ -224,7 +239,19 @@ ui-toast-group {
         }
 
         & > * {
-            transition: all 0.35s allow-discrete;
+            transition: opacity 0.35s allow-discrete, transform 0.35s allow-discrete, height 0.35s allow-discrete;
         }
     }
+}
+
+/**
+Utilties
+*/
+.flux-no-scrollbar {
+    scrollbar-width:none;
+    -ms-overflow-style:none;
+}
+
+.flux-no-scrollbar::-webkit-scrollbar{
+    display:none
 }

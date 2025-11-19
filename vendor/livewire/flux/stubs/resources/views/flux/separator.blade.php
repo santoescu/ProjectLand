@@ -1,3 +1,5 @@
+@blaze
+
 @props([
     'orientation' => null,
     'vertical' => false,

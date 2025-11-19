@@ -13,7 +13,7 @@
 @livewireStyles
 
 {{-- CSS y JS compilados por Vite, servidos directamente --}}
-<link rel="stylesheet" href="{{ asset('build/assets/app-w1ZZpO4E.css') }}">
+<link rel="stylesheet" href="{{ asset('build/assets/app-B7yxMB0h.css') }}">
 <script src="{{ asset('build/assets/app-Bbdxlwnq.js') }}"></script>
 
 @fluxAppearance

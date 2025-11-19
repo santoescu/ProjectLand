@@ -1,3 +1,5 @@
+@blaze
+
 @props([
     'interactive' => null,
     'position' => 'top',

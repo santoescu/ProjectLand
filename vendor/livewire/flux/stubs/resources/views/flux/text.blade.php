@@ -1,3 +1,5 @@
+@blaze
+
 @props([
     'inline' => false,
     'variant' => null,
