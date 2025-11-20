@@ -44,13 +44,12 @@ Route::middleware(['auth'])->group(function () {
         Route::resource('pays', PayController::class);
     });
 
-    Route::get('/pays/{id}/status/{status}/{user_id}', [PayController::class, 'updateStatus'])->name('pays.updateStatus');
 
-    Route::get('/pays/{id}/{user_id}', [PayController::class, 'updatePay'])->name('pays.updatePay');
-    Route::put('/pays/{id}/{user_id}/update', [PayController::class, 'updateEmail'])->name('pays.updateEmail');
 
 });
-
+Route::get('/pays/{id}/status/{status}/{user_id}', [PayController::class, 'updateStatus'])->name('pays.updateStatus');
+Route::put('/pays/{id}/{user_id}/update', [PayController::class, 'updateEmail'])->name('pays.updateEmail');
+Route::get('/pays/{id}/{user_id}', [PayController::class, 'updatePay'])->name('pays.updatePay');
 
 
 
