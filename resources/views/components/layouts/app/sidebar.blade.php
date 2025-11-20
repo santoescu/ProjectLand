@@ -42,57 +42,66 @@
         ];
     }
 @endphp
-<!DOCTYPE html>
+    <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="dark">
 <head>
     @include('partials.head')
 </head>
-    <body class="min-h-screen bg-white dark:bg-zinc-800">
-    @include('components.toast')
-    <flux:sidebar sticky collapsible class="bg-zinc-50 dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-700">
-        <flux:sidebar.header>
-            <a href="{{ route('dashboard') }}" class="me-5 flex items-center space-x-2 rtl:space-x-reverse" wire:navigate>
-                <x-app-logo/>
-            </a>
-            <flux:sidebar.collapse
-                class="in-data-flux-sidebar-on-desktop:not-in-data-flux-sidebar-collapsed-desktop:-mr-2"/>
-        </flux:sidebar.header>
+<body class="min-h-screen bg-white dark:bg-zinc-800">
+@include('components.toast')
+<flux:sidebar sticky collapsible class="bg-zinc-50 dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-700">
+    <flux:sidebar.header>
+        <a href="{{ route('dashboard') }}" class="me-5 flex items-center space-x-2 rtl:space-x-reverse" wire:navigate>
+            <x-app-logo/>
+        </a>
+        <flux:sidebar.collapse
+            class="in-data-flux-sidebar-on-desktop:not-in-data-flux-sidebar-collapsed-desktop:-mr-2"/>
+    </flux:sidebar.header>
 
-        <flux:sidebar.nav>
+    <flux:sidebar.nav>
 
-            @foreach($groups as $link)
-                <flux:sidebar.item :icon="$link['icon']" :href="$link['url']" :current="$link['current']"
-                                   wire:navigate>{{ $link['name'] }}</flux:sidebar.item>
-            @endforeach
+        @foreach($groups as $link)
+            <flux:sidebar.item :icon="$link['icon']" :href="$link['url']" :current="$link['current']"
+                               wire:navigate>{{ $link['name'] }}</flux:sidebar.item>
+        @endforeach
 
+    </flux:sidebar.nav>
 
-        </flux:sidebar.nav>
-        <flux:sidebar.spacer/>
-        <flux:sidebar.nav>
-            <flux:sidebar.item icon="cog-6-tooth"
-                               href="{{route('settings.profile')}}">{{ __('Settings') }}</flux:sidebar.item>
-            <form method="POST" action="{{ route('logout') }}" class="w-full">
-                @csrf
-                <flux:sidebar.item as="button" type="submit"
-                                   icon="arrow-right-start-on-rectangle">{{ __('Log Out') }}</flux:sidebar.item>
-            </form>
-        </flux:sidebar.nav>
-
-
-        <flux:sidebar.profile :initials="auth()->user()->initials()" name="{{ auth()->user()->name }}"/>
+    <flux:sidebar.spacer/>
+    <flux:sidebar.nav>
+        <flux:sidebar.item icon="cog-6-tooth"
+                           href="{{route('settings.profile')}}">{{ __('Settings') }}</flux:sidebar.item>
+        <form method="POST" action="{{ route('logout') }}" class="w-full">
+            @csrf
+            <flux:sidebar.item as="button" type="submit"
+                               icon="arrow-right-start-on-rectangle">{{ __('Log Out') }}</flux:sidebar.item>
+        </form>
+    </flux:sidebar.nav>
 
 
-    </flux:sidebar>
-    <flux:header class="lg:hidden">
-        <flux:sidebar.toggle class="lg:hidden" icon="bars-2" inset="left" />
-        <flux:spacer/>
+    <flux:sidebar.profile :initials="auth()->user()->initials()" name="{{ auth()->user()->name }}"/>
 
-        <flux:profile :initials="auth()->user()->initials()" name="{{ auth()->user()->name }}"/>
 
-    </flux:header>
+</flux:sidebar>
+<flux:header class="lg:hidden">
+    @foreach($groups as $link)
+        <flux:sidebar.item :icon="$link['icon']" :href="$link['url']" :current="$link['current']"
+                           wire:navigate></flux:sidebar.item>
+    @endforeach
+    <flux:spacer/>
+    <flux:sidebar.item icon="cog-6-tooth"
+                       href="{{route('settings.profile')}}"></flux:sidebar.item>
+    <form method="POST" action="{{ route('logout') }}" class="w-full">
+        @csrf
+        <flux:sidebar.item as="button" type="submit"
+                           icon="arrow-right-start-on-rectangle"></flux:sidebar.item>
+    </form>
+    <flux:profile :initials="auth()->user()->initials()"/>
 
-    {{ $slot }}
-    @fluxScripts
-    </body>
+</flux:header>
+
+{{ $slot }}
+@fluxScripts
+</body>
 
 </html>
