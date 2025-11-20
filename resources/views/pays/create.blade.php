@@ -106,7 +106,7 @@
         </div>
 
         <flux:input label="{{__('Amount')}}"  id="amount" name="amount" :value="old('amount')" />
-        <flux:input label="{{__('Description')}}" id="description" name="description" :value="old('description')"  />
+        <flux:input label="{{__('Notes')}}" id="description" name="description" :value="old('description')"  />
 
 
 

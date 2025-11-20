@@ -72,9 +72,9 @@ class PayController extends Controller
                     'user' => $user, // importante: pasamos el usuario al email
                 ];
 
-                Mail::send('emails.pays', $emailData, function ($message) use ($user) {
+                Mail::send('emails.pays', $emailData, function ($message) use ($user, $pay) {
                     $message->to($user->email)
-                        ->subject('Nuevo pago creado');
+                        ->subject($pay->project->name.' - '.$pay->contractor->company_nam.' - '.'New Payment Request');
                 });
             }
         } catch (Exception $e) {
@@ -181,9 +181,9 @@ class PayController extends Controller
                         'user' => $user, // importante: pasamos el usuario al email
                     ];
 
-                    Mail::send('emails.pays', $emailData, function ($message) use ($user) {
+                    Mail::send('emails.pays', $emailData, function ($message) use ($user, $pay) {
                         $message->to($user->email)
-                            ->subject('Nuevo pago creado');
+                            ->subject($pay->project->name.' - '.$pay->contractor->company_nam.' - '.'New Payment Request');
                     });
                 }
             } catch (Exception $e) {

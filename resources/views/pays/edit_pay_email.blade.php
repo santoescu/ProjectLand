@@ -117,7 +117,7 @@
         </div>
 
         <flux:input label="{{__('Amount')}}"  id="amount" name="amount" :value="old('amount', $pay->amount)" :disabled="in_array($pay->status, [1, 2, 3])"  />
-        <flux:input label="{{__('Description')}}" id="description" name="description" :value="old('description', $pay->description)" :disabled="in_array($pay->status, [1, 2, 3])"  />
+        <flux:input label="{{__('Notes')}}" id="description" name="description" :value="old('description', $pay->description)" :disabled="in_array($pay->status, [1, 2, 3])"  />
 
 
 
