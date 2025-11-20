@@ -51,7 +51,7 @@ class PayController extends Controller
 
         $data = $request->all();
         $data['amount'] = (float) $data['amount'];
-        $users = User::where('role', 'director')->get();
+        $users = User::whereIn('role', ['director', 'admin'])->get();
         $data['user_id'] = $users->pluck('_id')->toArray();;
         $data['status'] = 0;
         $data['histories'] = [
