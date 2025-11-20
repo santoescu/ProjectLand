@@ -79,7 +79,7 @@ class UserController extends Controller
 
         session()->flash('toast', [
             'type' => 'success',
-            'message' => __("Deleted :name", ['name' => __('Contractor')])
+            'message' => __("Deleted :name", ['name' => __('Vendor')])
         ]);
 
         return redirect()->route('users.index');

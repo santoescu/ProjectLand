@@ -44,7 +44,7 @@ class ContractorController extends Controller
         Contractor::create($request->all());
         session()->flash('toast', [
             'type' => 'success',
-            'message' => __("Created :name", ['name' => __('Contractor')])
+            'message' => __("Created :name", ['name' => __('Vendor')])
         ]);
         return redirect()->route('contractors.index');
     }
@@ -79,7 +79,7 @@ class ContractorController extends Controller
 
         session()->flash('toast', [
             'type' => 'success',
-            'message' => __("Deleted :name", ['name' => __('Contractor')])
+            'message' => __("Deleted :name", ['name' => __('Vendor')])
         ]);
 
         return redirect()->route('contractors.index');

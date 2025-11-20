@@ -1,7 +1,7 @@
-<x-layouts.app :title="__('Chart of Account')">
+<x-layouts.app :title="__('Budjet Code')">
 
     @include('partials.tittle', [
-    'title' => __("Create :name", ['name' => __('Chart of Account')]) ,
+    'title' => __("Create :name", ['name' => __('Budjet Code')]) ,
     'subheading' => ""
     ])
 

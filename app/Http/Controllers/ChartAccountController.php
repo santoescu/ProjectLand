@@ -49,7 +49,7 @@ class ChartAccountController extends Controller
         ChartAccount::create($data);
         session()->flash('toast', [
             'type' => 'success',
-            'message' => __("Created :name", ['name' => __('Chart of Account')])
+            'message' => __("Created :name", ['name' => __('Budjet Code')])
         ]);
         return redirect()->route('chartAccounts.index');
     }
@@ -84,7 +84,7 @@ class ChartAccountController extends Controller
 
         session()->flash('toast', [
             'type' => 'success',
-            'message' => __("Deleted :name", ['name' => __('Chart of Account')])
+            'message' => __("Deleted :name", ['name' => __('Budjet Code')])
         ]);
 
         return redirect()->route('chartAccounts.index');

@@ -3,7 +3,7 @@
 
     $groups = [
         [
-            'name' => __('Pays'),
+            'name' => __('Payables'),
             'icon' => 'currency-dollar',
             'url' => route('pays.index'),
             'current' => request()->routeIs('pays.index'),
@@ -12,7 +12,7 @@
 
     if (in_array($userRole, ['accounting_assistant', 'director'])) {
         $groups[] = [
-            'name' => __('Contractors'),
+            'name' => __('Vendors'),
             'icon' => 'clipboard-document-list',
             'url' => route('contractors.index'),
             'current' => request()->routeIs('contractors.index'),
@@ -26,7 +26,7 @@
         ];
 
         $groups[] = [
-            'name' => __('Charts of Accounts'),
+            'name' => __('Budjet Codes'),
             'icon' => 'presentation-chart-line',
             'url' => route('chartAccounts.index'),
             'current' => request()->routeIs('chartAccounts.index'),

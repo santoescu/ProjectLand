@@ -1,7 +1,7 @@
-<x-layouts.app :title="__('Contractor')">
+<x-layouts.app :title="__('Vendor')">
     @include('partials.tittle', [
-        'title' => __('Contractors'),
-        'subheading' => __('Management of registered :name',['name'=> __('contractors')])
+        'title' => __('Vendors'),
+        'subheading' => __('Management of registered :name',['name'=> __('vendors')])
     ])
 
     <div class="flex flex-col">
@@ -55,7 +55,7 @@
                                     <td></td>
                                     <td></td>
                                     <td  class="px-6 py-4 text-center text-gray-500">
-                                        {{__('There are no registered :name.',['name'=>__('contractors')])}}
+                                        {{__('There are no registered :name.',['name'=>__('vendors')])}}
                                     </td>
                                     <td></td>
                                     <td></td>
@@ -83,7 +83,7 @@
             @method('PUT')
 
             <div>
-                <flux:heading size="lg">{{ __("Edit :name", ['name' => __('Contractor')]) }}</flux:heading>
+                <flux:heading size="lg">{{ __("Edit :name", ['name' => __('Vendor')]) }}</flux:heading>
                 <flux:text class="mt-2">{{__('Update this :name\'s details.',['name'=>__('contractor')])}}</flux:text>
             </div>
 
@@ -117,7 +117,7 @@
     <flux:modal name="confirm-delete" class="md:w-96" :dismissible="true">
         <div class="space-y-6">
             <div>
-                <flux:heading size="lg">{{ __("Delete :name?", ['name' => __('Contractor')]) }}</flux:heading>
+                <flux:heading size="lg">{{ __("Delete :name?", ['name' => __('Vendor')]) }}</flux:heading>
                 <flux:text class="mt-2">
                     <p>{{ __("You're about to delete this :name.", ['name' => __('contractor')]) }}</p>
                     <p>{{ __('This action cannot be reversed.') }}</p>
@@ -195,7 +195,7 @@
                             window.dispatchEvent(new CustomEvent('toast', {
                                 detail: {
                                     type: 'success',
-                                    message: "{{ __("Updated :name", ['name' => __('Contractor')])}}"
+                                    message: "{{ __("Updated :name", ['name' => __('Vendor')])}}"
                                 }
                             }));
                         },
