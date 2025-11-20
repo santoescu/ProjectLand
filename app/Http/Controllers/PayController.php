@@ -74,7 +74,7 @@ class PayController extends Controller
 
                 Mail::send('emails.pays', $emailData, function ($message) use ($user, $pay) {
                     $message->to($user->email)
-                        ->subject($pay->project->name.' - '.$pay->contractor->company_nam.' - '.'New Payment Request');
+                        ->subject($pay->project->name.' - '.$pay->contractor->company_name.' - '.'New Payment Request');
                 });
             }
         } catch (Exception $e) {
@@ -183,7 +183,7 @@ class PayController extends Controller
 
                     Mail::send('emails.pays', $emailData, function ($message) use ($user, $pay) {
                         $message->to($user->email)
-                            ->subject($pay->project->name.' - '.$pay->contractor->company_nam.' - '.'New Payment Request');
+                            ->subject($pay->project->name.' - '.$pay->contractor->company_name.' - '.'New Payment Request');
                     });
                 }
             } catch (Exception $e) {
