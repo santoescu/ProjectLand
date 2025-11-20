@@ -1,24 +1,27 @@
-# =========================
-#  Etapa 1: Build de assets
-# =========================
-FROM node:18 AS build
+# Imagen base PHP 8.2
+###############################################
+# STAGE 1: Construcción de assets con Node
+###############################################
+FROM node:18 AS build-assets
 
 WORKDIR /app
 
-COPY package*.json ./
+# Copiar solo archivos necesarios para NPM
+COPY package.json package-lock.json vite.config.js ./
+COPY resources ./resources
+
 RUN npm install
-
-COPY . .
-
-# Construir assets con Vite (incluye Flux)
 RUN npm run build
 
 
-# =========================
-#  Etapa 2: PHP + Composer
-# =========================
+
+###############################################
+# STAGE 2: Imagen PHP + Laravel
+###############################################
 FROM php:8.2-fpm
 
+# Instalar dependencias del sistema
+# Dependencias del sistema
 RUN apt-get update && apt-get install -y \
     git \
     curl \
@@ -32,28 +35,41 @@ RUN apt-get update && apt-get install -y \
     pkg-config \
     && docker-php-ext-install mbstring zip exif pcntl bcmath gd
 
-# Extensión MongoDB
-RUN pecl install mongodb \
-    && echo "extension=mongodb.so" > /usr/local/etc/php/conf.d/mongodb.ini
+# Instalar la extensión MongoDB
+# Instalar extensión MongoDB
+RUN pecl install mongodb && \
+    echo "extension=mongodb.so" > /usr/local/etc/php/conf.d/mongodb.ini
 
-# Composer
+# Instalar Node.js 18 para Vite
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
+    apt-get install -y nodejs
+
+# Instalar Composer
 COPY --from=composer:2.7 /usr/bin/composer /usr/bin/composer
 
+# Directorio de la app
 WORKDIR /var/www/html
 
-# Copiar proyecto completo
+# Copiar archivos del proyecto
+# Copiar resto del proyecto
 COPY . .
 
-# Copiar assets compilados desde la etapa 1
-COPY --from=build /app/public ./public
+# Copiar assets construidos desde el Stage 1
+COPY --from=build-assets /app/public/build ./public/build
 
-# Instalar dependencias PHP optimizadas
+# Instalar dependencias de Laravel
 RUN composer install --no-interaction --prefer-dist --optimize-autoloader
+
+# Construir Vite
+RUN npm install && npm run build
 
 # Permisos
 RUN chmod -R 777 storage bootstrap/cache
 
+# Puerto de Cloud Run
+# Cloud Run escucha en el 8080
 EXPOSE 8080
 
-# Servidor embebido para Cloud Run
+# Servir Laravel
 CMD php -S 0.0.0.0:8080 -t public
+
