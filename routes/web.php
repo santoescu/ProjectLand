@@ -28,7 +28,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('settings/appearance', Appearance::class)->name('settings.appearance');
     Route::get('settings/language', Language::class)->name('settings.language');
 
-    Route::middleware(['role:accounting_assistant,director'])->group(function () {
+    Route::middleware(['role:accounting_assistant,director,admin'])->group(function () {
         Route::resource('contractors', ContractorController::class);
         Route::resource('projects', ProjectController::class);
         Route::resource('chartAccounts', ChartAccountController::class)->except(['show']);
@@ -36,11 +36,11 @@ Route::middleware(['auth'])->group(function () {
             ->name('chartAccounts.tree');
     });
 
-    Route::middleware(['role:,director'])->group(function () {
+    Route::middleware(['role:,admin'])->group(function () {
         Route::resource('users', UserController::class);
     });
 
-    Route::middleware(['role:,director,accounting_assistant,project_manager'])->group(function () {
+    Route::middleware(['role:,director,accounting_assistant,project_manager,admin'])->group(function () {
         Route::resource('pays', PayController::class);
     });
 

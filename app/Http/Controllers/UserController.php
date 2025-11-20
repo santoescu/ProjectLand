@@ -36,7 +36,7 @@ class UserController extends Controller
                 'max:255',
                 Rule::unique(User::class),
             ],
-            'role' => 'required|string|in:accounting_assistant,project_manager,director'
+            'role' => 'required|string|in:accounting_assistant,project_manager,director,admin'
         ]);
 
         User::create($request->all());
@@ -60,7 +60,7 @@ class UserController extends Controller
                 'max:255',
                 Rule::unique(User::class)->ignore($id),
             ],
-            'role' => 'required|string|in:accounting_assistant,project_manager,director'
+            'role' => 'required|string|in:accounting_assistant,project_manager,director,admin'
         ]);
 
         $user = User::findOrFail($id);

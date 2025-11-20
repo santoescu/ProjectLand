@@ -46,7 +46,7 @@ class Profile extends Component
                 'max:255',
                 Rule::unique(User::class)->ignore($user->id),
             ],
-            'role' => 'required|string|in:accounting_assistant,project_manager,director'
+            'role' => 'required|string|in:accounting_assistant,project_manager,director,admin'
         ]);
 
         $user->fill($validated);

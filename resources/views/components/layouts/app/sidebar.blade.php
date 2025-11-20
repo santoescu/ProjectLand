@@ -10,7 +10,7 @@
         ],
     ];
 
-    if (in_array($userRole, ['accounting_assistant', 'director'])) {
+    if (in_array($userRole, ['accounting_assistant', 'director', 'admin'])) {
         $groups[] = [
             'name' => __('Vendors'),
             'icon' => 'clipboard-document-list',
@@ -33,7 +33,7 @@
         ];
     }
 
-    if ($userRole === 'director') {
+    if ($userRole === 'admin') {
         $groups[] = [
             'name' => __('Users'),
             'icon' => 'user',

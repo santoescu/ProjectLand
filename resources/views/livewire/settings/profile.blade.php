@@ -27,10 +27,11 @@
                 @endif
             </div>
 
-            <flux:select wire:model="role" label="{{__('Role')}}" name="role"  autocomplete="role" >
+            <flux:select wire:model="role" label="{{__('Role')}}" name="role"  autocomplete="role" disabled>
                 <option value="accounting_assistant">{{ __('Accounting Assistant') }}</option>
                 <option value="project_manager">{{ __('Project Manager') }}</option>
                 <option value="director">{{ __('Director') }}</option>
+                <option value="admin">{{ __('Admin') }}</option>
             </flux:select>
 
             <div class="flex items-center gap-4">

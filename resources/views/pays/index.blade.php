@@ -74,7 +74,7 @@
                                                 onclick='openHistoriesModal({{$pay}})'>
                                             </flux:button>
                                         </flux:modal.trigger>
-                                        @if (in_array($userRole, [ 'director']) && !in_array($pay->status, [1, 3, 2]))
+                                        @if (in_array($userRole, [ 'director','admin']) && !in_array($pay->status, [1, 3, 2]))
 
                                             <a href="{{ route('pays.updateStatus', ['id' => $pay->_id, 'status' => 3,'user_id' => $userId]) }}">
                                                 <flux:button
@@ -91,7 +91,7 @@
                                                 </flux:button>
                                             </a>
                                         @endif
-                                        @if (in_array($userRole, ['accounting_assistant','director']) && in_array($pay->status, [3]))
+                                        @if (in_array($userRole, ['accounting_assistant','director','admin']) && in_array($pay->status, [3]))
                                             <a href="{{ route('pays.updateStatus', ['id' => $pay->_id, 'status' => 2,'user_id' => $userId]) }}">
                                                 <flux:button
                                                     size="sm"

@@ -90,6 +90,7 @@
                 <option value="accounting_assistant">{{ __('Accounting Assistant') }}</option>
                 <option value="project_manager">{{ __('Project Manager') }}</option>
                 <option value="director">{{ __('Director') }}</option>
+                <option value="admin">{{ __('Admin') }}</option>
             </flux:select>
 
             <div id="formErrors" class="text-red-500 text-sm"></div>
