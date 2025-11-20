@@ -65,8 +65,8 @@
                                    wire:navigate>{{ $link['name'] }}</flux:sidebar.item>
             @endforeach
 
-
         </flux:sidebar.nav>
+
         <flux:sidebar.spacer/>
         <flux:sidebar.nav>
             <flux:sidebar.item icon="cog-6-tooth"
@@ -84,10 +84,19 @@
 
     </flux:sidebar>
     <flux:header class="lg:hidden">
-        <flux:sidebar.toggle class="lg:hidden" icon="bars-2" inset="left" />
+        @foreach($groups as $link)
+            <flux:sidebar.item :icon="$link['icon']" :href="$link['url']" :current="$link['current']"
+                               wire:navigate></flux:sidebar.item>
+        @endforeach
         <flux:spacer/>
-
-        <flux:profile :initials="auth()->user()->initials()" name="{{ auth()->user()->name }}"/>
+        <flux:sidebar.item icon="cog-6-tooth"
+                           href="{{route('settings.profile')}}"></flux:sidebar.item>
+        <form method="POST" action="{{ route('logout') }}" class="w-full">
+            @csrf
+            <flux:sidebar.item as="button" type="submit"
+                               icon="arrow-right-start-on-rectangle"></flux:sidebar.item>
+        </form>
+        <flux:profile :initials="auth()->user()->initials()"/>
 
     </flux:header>
 
