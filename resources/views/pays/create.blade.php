@@ -1,7 +1,7 @@
-<x-layouts.app :title="__('Pay')">
+<x-layouts.app :title="__('Payable')">
 
     @include('partials.tittle', [
-    'title' => __("Create :name", ['name' => __('Pay')]) ,
+    'title' => __("Add :name", ['name' => __('Payable')]) ,
     'subheading' => ""
     ])
 
@@ -42,7 +42,7 @@
         </div>
         <div data-flux-field class="relative {{ $errors->has('contractor_id') ? 'error' : '' }}">
             <label for="contractor_id"  class="block text-base">
-                {{ __('Contractor') }}
+                {{ __('Vendor') }}
             </label>
             <select data-hs-select='{
                       "hasSearch": true,
@@ -74,7 +74,7 @@
         </div>
         <div data-flux-field class="relative {{ $errors->has('chartAccount_id') ? 'error' : '' }}">
             <label for="chartAccount_id"  class="block text-base">
-                {{ __('Chart of Account') }}
+                {{ __('Budjet Code') }}
             </label>
             <select data-hs-select='{
                       "hasSearch": true,

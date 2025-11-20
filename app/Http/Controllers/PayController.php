@@ -85,7 +85,7 @@ class PayController extends Controller
 
         session()->flash('toast', [
             'type' => 'success',
-            'message' => __("Created :name", ['name' => __('Pay')]),
+            'message' => __("Created :name", ['name' => __('Payable')]),
         ]);
         return redirect()->route('pays.index');
     }
@@ -129,7 +129,7 @@ class PayController extends Controller
         $pay->update($data);
         session()->flash('toast', [
             'type' => 'success',
-            'message' => __("Updated :name", ['name' => __('Pay')]),
+            'message' => __("Updated :name", ['name' => __('Payable')]),
         ]);
         return redirect()->route('pays.index');
     }
@@ -193,7 +193,7 @@ class PayController extends Controller
 
         session()->flash('toast', [
             'type' => 'success',
-            'message' => __("Updated :name", ['name' => __('Pay')]),
+            'message' => __("Updated :name", ['name' => __('Payable')]),
         ]);
         return back();
     }
@@ -249,7 +249,7 @@ class PayController extends Controller
         $pay->update($data);
         session()->flash('toast', [
             'type' => 'success',
-            'message' => __("Updated :name", ['name' => __('Pay')]),
+            'message' => __("Updated :name", ['name' => __('Payable')]),
         ]);
 
         return redirect()->route('pays.updatePay', ['id' => $pay->_id, 'user_id' => $user->_id]);

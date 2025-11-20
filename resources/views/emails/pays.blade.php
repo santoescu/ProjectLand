@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>{{__("New :name", ['name' => __('Pay')])}}</title>
+    <title>{{__("New :name", ['name' => __('Payable')])}}</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -71,12 +71,12 @@
 
     <!-- Contenido centrado -->
     <div class="content">
-        <h2>{{__("New :name", ['name' => __('Pay')])}}</h2>
+        <h2>{{__("New :name", ['name' => __('Payable')])}}</h2>
 
         <p><strong>{{__('Project')}}</strong> {{ $pay->project->name ?? '' }}</p>
         <p><strong>{{__('Amount')}}</strong> ${{ number_format($pay->amount, 2) }}</p>
-        <p><strong>{{__('Contractors')}}</strong> {{ $pay->contractor->company_name ?? '' }}</p>
-        <p><strong>{{__('Chart of Account')}}:</strong> {{ $pay->chartAccount->name ?? '' }}</p>
+        <p><strong>{{__('Vendors')}}</strong> {{ $pay->contractor->company_name ?? '' }}</p>
+        <p><strong>{{__('Budjet Code')}}:</strong> {{ $pay->chartAccount->name ?? '' }}</p>
         <a href="{{ route('pays.updatePay', ['id' => $pay->id, 'user_id' => $user->id]) }}" class="button">{{ __("View") }}</a>
 
 
