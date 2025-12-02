@@ -35,15 +35,17 @@
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800 dark:text-neutral-200">{{ $project->name_sub_project }}</td>
                                     <td class="px-6 py-4 flex justify-center gap-2">
                                         <!-- Botón Editar -->
-                                        <flux:modal.trigger name="edit-project">
-                                            <flux:button
-                                                size="sm"
-                                                variant="primary"
-                                                icon="pencil-square"
-                                                onclick='openEditModal({{$project}})'>
-                                            </flux:button>
+                                        <flux:button
+                                            aria-haspopup="dialog"
+                                            aria-expanded="false"
+                                            aria-controls="edit-project"
+                                            data-hs-overlay="#edit-project"
+                                            size="sm"
+                                            variant="primary"
+                                            icon="pencil-square"
+                                            onclick='openEditModal({{$project}})'>
 
-                                        </flux:modal.trigger>
+                                        </flux:button>
                                     </td>
                                 </tr>
                             @empty
@@ -70,68 +72,78 @@
     </div>
 
 
-    <!-- Modal Único para Editar -->
-    <flux:modal name="edit-project" variant="flyout">
-        <form id="editProjectForm" method="POST" action="" class="space-y-6">
-            @csrf
-            @method('PUT')
+    <div id="edit-project" class="hs-overlay hs-overlay-open:translate-x-0 hidden translate-x-full fixed top-0 end-0 transition-all duration-300 transform h-full max-w-sm w-full z-80 bg-white border-e border-gray-200 dark:bg-neutral-800 dark:border-neutral-700" role="dialog" tabindex="-1" aria-labelledby="edit-project-label">
+        <div class="flex justify-between items-center py-3 px-4 border-b border-gray-200 dark:border-neutral-700">
+            <h3 id="edit-project-label" class="font-bold text-gray-800 dark:text-white">
+                {{ __("Edit :name", ['name' => __('Project')]) }}
+            </h3>
+            <button type="button" class="size-8 inline-flex justify-center items-center gap-x-2 rounded-full border border-transparent bg-gray-100 text-gray-800 hover:bg-gray-200 focus:outline-hidden focus:bg-gray-200 disabled:opacity-50 disabled:pointer-events-none dark:bg-neutral-700 dark:hover:bg-neutral-600 dark:text-neutral-400 dark:focus:bg-neutral-600" aria-label="Close" data-hs-overlay="#edit-project">
+                <span class="sr-only">Close</span>
+                <svg class="shrink-0 size-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18 6 6 18"></path>
+                    <path d="m6 6 12 12"></path>
+                </svg>
+            </button>
+        </div>
+        <div class="p-4">
+            <form id="editProjectForm" method="POST" action="" class="space-y-6">
+                @csrf
+                @method('PUT')
+                <flux:input id="name" label="{{__('Name')}}" name="name"  />
+                <label   class="block text-base">
+                    {{ __('Subprojects') }}
+                </label>
+                <!-- Input Group -->
+                <div id="hs-destroy-and-reinitialize-wrapper-for-copy" class="space-y-3">
+                    <div id="hs-destroy-and-reinitialize-content-for-copy">
+                        <div class="relative">
 
-            <div>
-                <flux:heading size="lg">{{ __("Edit :name", ['name' => __('Project')]) }}</flux:heading>
-                <flux:text class="mt-2">{{__('Update this :name\'s details.',['name'=>__('project')])}}</flux:text>
-            </div>
+                            <flux:input placeholder="{{__('Subproject')}}" name="subprojects[]">
+                                <x-slot name="iconTrailing">
+                                    <flux:button size="sm" variant="subtle" icon="x-mark" class="-mr-1 remove-subproject"  data-hs-copy-markup-delete-item="" />
+                                </x-slot>
+                            </flux:input>
 
-            <flux:input id="name" label="{{__('Name')}}" name="name"  />
-            <label   class="block text-base">
-                {{ __('Subprojects') }}
-            </label>
-            <!-- Input Group -->
-            <div id="hs-destroy-and-reinitialize-wrapper-for-copy" class="space-y-3">
-                <div id="hs-destroy-and-reinitialize-content-for-copy">
-                    <div class="relative">
-
-                        <flux:input placeholder="{{__('Subproject')}}" name="subprojects[]">
-                            <x-slot name="iconTrailing">
-                                <flux:button size="sm" variant="subtle" icon="x-mark" class="-mr-1 remove-subproject"  data-hs-copy-markup-delete-item="" />
-                            </x-slot>
-                        </flux:input>
-
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <p class="mt-3 text-end">
-                <button id="hs-copy-markup-to-destroy" type="button" data-hs-copy-markup='{
+                <p class="mt-3 text-end">
+                    <button id="hs-copy-markup-to-destroy" type="button" data-hs-copy-markup='{
                     "targetSelector": "#hs-destroy-and-reinitialize-content-for-copy",
                     "wrapperSelector": "#hs-destroy-and-reinitialize-wrapper-for-copy"
                     }'
-                        class="py-1.5 px-2 inline-flex items-center gap-x-1 text-xs font-medium rounded-full border border-dashed border-gray-200 bg-white text-gray-800 hover:bg-gray-50 focus:outline-hidden focus:bg-gray-50 disabled:opacity-50 disabled:pointer-events-none dark:bg-neutral-700 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-700 dark:focus:bg-neutral-700">
-                    <svg class="shrink-0 size-3.5" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M5 12h14"></path>
-                        <path d="M12 5v14"></path>
-                    </svg>
-                    {{__('Add')}}
-                </button>
-            </p>
-            <!-- End Input Group -->
+                            class="py-1.5 px-2 inline-flex items-center gap-x-1 text-xs font-medium rounded-full border border-dashed border-gray-200 bg-white text-gray-800 hover:bg-gray-50 focus:outline-hidden focus:bg-gray-50 disabled:opacity-50 disabled:pointer-events-none dark:bg-neutral-700 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-700 dark:focus:bg-neutral-700">
+                        <svg class="shrink-0 size-3.5" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M5 12h14"></path>
+                            <path d="M12 5v14"></path>
+                        </svg>
+                        {{__('Add')}}
+                    </button>
+                </p>
+                <!-- End Input Group -->
 
 
-            <div id="formErrors" class="text-red-500 text-sm"></div>
-            <div class="flex gap-3">
+                <div id="formErrors" class="text-red-500 text-sm"></div>
+                <div class="flex gap-3">
 
-                <flux:spacer />
-                <flux:button type="submit" icon="archive-box-arrow-down" variant="primary"></flux:button>
+                    <flux:spacer />
+                    <flux:button type="submit" icon="archive-box-arrow-down" variant="primary"></flux:button>
 
-                <flux:modal.trigger name="confirm-delete">
-                    <flux:button
-                        type="button"
-                        icon="archive-box-x-mark"
-                        variant="danger">
-                    </flux:button>
-                </flux:modal.trigger>
-            </div>
-        </form>
-    </flux:modal>
+                    <flux:modal.trigger name="confirm-delete">
+                        <flux:button
+                            type="button"
+                            icon="archive-box-x-mark"
+                            variant="danger">
+                        </flux:button>
+                    </flux:modal.trigger>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+
 
     <!-- Modal de confirmación -->
     <flux:modal name="confirm-delete" class="md:w-96" :dismissible="true">
@@ -246,7 +258,7 @@
                         method: "POST", // 👈 en vez de PUT
                         data: data + "&_method=PUT",
                         success: function (response) {
-                            Flux.modal('edit-project').close();
+                            HSOverlay.close('#edit-project')
                             location.reload();
                             window.dispatchEvent(new CustomEvent('toast', {
                                 detail: {
@@ -263,7 +275,7 @@
                                     .map(e => e.join("<br>"))
                                     .join("<br>");
                                 $("#formErrors").html(errorMessages);
-                                Flux.modal('edit-project').show();
+                                HSOverlay.open('#edit-project')
                             }
                         }
                     });

@@ -204,7 +204,7 @@
                         method: "POST", // 👈 en vez de PUT
                         data: data + "&_method=PUT",
                         success: function (response) {
-                            Flux.modal('edit-contractor').close();
+                            HSOverlay.close('#edit-contractor');
                             location.reload();
                             window.dispatchEvent(new CustomEvent('toast', {
                                 detail: {
@@ -221,7 +221,7 @@
                                     .map(e => e.join("<br>"))
                                     .join("<br>");
                                 $("#formErrors").html(errorMessages);
-                                Flux.modal('edit-contractor').show();
+                                HSOverlay.open('#edit-contractor');
                             }
                         }
                     });

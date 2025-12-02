@@ -125,7 +125,6 @@
 
         <div class="flex justify-end gap-2">
             <flux:button
-                size="sm"
                 variant="primary"
                 icon="numbered-list"
                 aria-haspopup="dialog"
@@ -288,7 +287,6 @@
                         method: "POST", // 👈 en vez de PUT
                         data: data + "&_method=PUT",
                         success: function (response) {
-                            Flux.modal('edit-project').close();
                             location.reload();
                             window.dispatchEvent(new CustomEvent('toast', {
                                 detail: {
@@ -305,7 +303,6 @@
                                     .map(e => e.join("<br>"))
                                     .join("<br>");
                                 $("#formErrors").html(errorMessages);
-                                Flux.modal('edit-project').show();
                             }
                         }
                     });
