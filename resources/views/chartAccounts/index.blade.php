@@ -44,8 +44,8 @@
                                             <flux:button
                                                 aria-haspopup="dialog"
                                                 aria-expanded="false"
-                                                aria-controls="chartAccount"
-                                                data-hs-overlay="#chartAccount"
+                                                aria-controls="edit-chartAccount"
+                                                data-hs-overlay="#edit-chartAccount"
                                                 size="sm"
                                                 variant="primary"
                                                 icon="pencil-square"
