@@ -26,7 +26,7 @@
         ];
 
         $groups[] = [
-            'name' => __('Budjet Codes'),
+            'name' => __('Budget Codes'),
             'icon' => 'presentation-chart-line',
             'url' => route('chartAccounts.index'),
             'current' => request()->routeIs('chartAccounts.index'),

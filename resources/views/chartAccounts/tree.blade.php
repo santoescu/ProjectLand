@@ -1,7 +1,7 @@
-<x-layouts.app :title="__('Budjet Code')">
+<x-layouts.app :title="__('Budget Code')">
     @include('partials.tittle', [
-        'title' => __('Budjet Codes'),
-        'subheading' => __('Management of registered :name',['name'=> __('budjet codes')]),
+        'title' => __('Budget Codes'),
+        'subheading' => __('Management of registered :name',['name'=> __('budget codes')]),
         'button' => [
         'label' => __('Table'),
         'route' => route('chartAccounts.index')

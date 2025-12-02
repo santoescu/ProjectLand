@@ -83,7 +83,7 @@
         </div>
         <div data-flux-field class="relative {{ $errors->has('chartAccount_id') ? 'error' : '' }}">
             <label for="chartAccount_id"  class="block text-base">
-                {{ __('Budjet Code') }}
+                {{ __('Budget Code') }}
             </label>
             <select data-hs-select='{
                       "hasSearch": true,

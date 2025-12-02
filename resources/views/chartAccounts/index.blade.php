@@ -1,7 +1,7 @@
-<x-layouts.app :title="__('Budjet Code')">
+<x-layouts.app :title="__('Budget Code')">
     @include('partials.tittle', [
-        'title' => __('Budjet Codes'),
-        'subheading' => __('Management of registered :name',['name'=> __('budjet codes')]),
+        'title' => __('Budget Codes'),
+        'subheading' => __('Management of registered :name',['name'=> __('budget codes')]),
         'button' => [
         'label' => __('Tree'),
         'route' => route('chartAccounts.tree')
@@ -55,7 +55,7 @@
                                     <tr>
                                         <td></td>
                                         <td class="px-6 py-4 text-center text-gray-500">
-                                            {{ __('There are no registered :name.', ['name'=>__('budjet codes')]) }}
+                                            {{ __('There are no registered :name.', ['name'=>__('budget codes')]) }}
                                         </td>
                                         <td></td>
                                     </tr>
@@ -84,8 +84,8 @@
             @method('PUT')
 
             <div>
-                <flux:heading size="lg">{{ __("Edit :name", ['name' => __('Budjet Code')]) }}</flux:heading>
-                <flux:text class="mt-2">{{__('Update this :name\'s details.',['name'=>__('budjet code')])}}</flux:text>
+                <flux:heading size="lg">{{ __("Edit :name", ['name' => __('Budget Code')]) }}</flux:heading>
+                <flux:text class="mt-2">{{__('Update this :name\'s details.',['name'=>__('budget code')])}}</flux:text>
             </div>
 
             <flux:input id="name" label="{{__('Name')}}" name="name"  />
@@ -140,9 +140,9 @@
     <flux:modal name="confirm-delete" class="md:w-96" :dismissible="true">
         <div class="space-y-6">
             <div>
-                <flux:heading size="lg">{{ __("Delete :name?", ['name' => __('Budjet Code')]) }}</flux:heading>
+                <flux:heading size="lg">{{ __("Delete :name?", ['name' => __('Budget Code')]) }}</flux:heading>
                 <flux:text class="mt-2">
-                    <p>{{ __("You're about to delete this :name.", ['name' => __('budjet code')]) }}</p>
+                    <p>{{ __("You're about to delete this :name.", ['name' => __('budget code')]) }}</p>
                     <p>{{ __('This action cannot be reversed.') }}</p>
                 </flux:text>
             </div>
@@ -239,7 +239,7 @@
                             window.dispatchEvent(new CustomEvent('toast', {
                                 detail: {
                                     type: 'success',
-                                    message: "{{ __("Updated :name", ['name' => __('Budjet Code')])}}"
+                                    message: "{{ __("Updated :name", ['name' => __('Budget Code')])}}"
                                 }
                             }));
                         },
