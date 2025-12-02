@@ -67,25 +67,17 @@
                                             </a>
                                         @endif
 
+                                        <flux:button
+                                            size="sm"
+                                            variant="primary"
+                                            icon="numbered-list"
+                                            aria-haspopup="dialog"
+                                            aria-expanded="false"
+                                            aria-controls="hs-vertically-centered-modal"
+                                            data-hs-overlay="#hs-vertically-centered-modal"
+                                            onclick="openHistoriesModal({{ $pay }})">
 
-
-
-
-
-
-
-
-                                            <flux:button
-                                                size="sm"
-                                                variant="primary"
-                                                icon="numbered-list"
-                                                aria-haspopup="dialog"
-                                                aria-expanded="false"
-                                                aria-controls="hs-vertically-centered-modal"
-                                                data-hs-overlay="#hs-vertically-centered-modal"
-                                                onclick="openHistoriesModal({{ $pay }})">
-
-                                            </flux:button>
+                                        </flux:button>
 
                                         @if (in_array($userRole, [ 'director','admin']) && !in_array($pay->status, [1, 3, 2]))
 
@@ -118,9 +110,13 @@
                             @empty
                                 <tr>
                                     <td></td>
+                                    <td></td>
                                     <td class="px-6 py-4 text-center text-gray-500">
                                         {{ __('There are no registered :name.', ['name'=>__('projects')]) }}
                                     </td>
+
+                                    <td></td>
+                                    <td></td>
                                     <td></td>
                                 </tr>
                             @endforelse
@@ -169,7 +165,7 @@
                 </div>
                 <div class="flex justify-end items-center gap-x-2 py-3 px-4 border-t border-gray-200 dark:border-neutral-700">
                     <button type="button" class="py-2 px-3 inline-flex items-center gap-x-2 text-sm font-medium rounded-lg border border-gray-200 bg-white text-gray-800 shadow-2xs hover:bg-gray-50 focus:outline-hidden focus:bg-gray-50 disabled:opacity-50 disabled:pointer-events-none dark:bg-neutral-800 dark:border-neutral-700 dark:text-white dark:hover:bg-neutral-700 dark:focus:bg-neutral-700" data-hs-overlay="#hs-vertically-centered-modal">
-                        Close
+                        {{__('Close')}}
                     </button>
                 </div>
 
@@ -178,25 +174,6 @@
         </div>
     </div>
 
-    <flux:modal name="histories-pay" class="md:w-300">
-        <div class="space-y-6">
-            <div>
-                <flux:heading size="lg"></flux:heading>
-            </div>
-            <table id="histories-table" class="w-full table-auto border border-gray-200">
-                <thead>
-                <tr class="bg-gray-100">
-                    <th class="border px-2 py-1">{{__('Users')}}</th>
-                    <th class="border px-2 py-1">{{__('Actions')}}</th>
-                    <th class="border px-2 py-1">{{__('Date')}}</th>
-                </tr>
-                </thead>
-                <tbody>
-                <!-- Aquí se llenará el historial -->
-                </tbody>
-            </table>
-        </div>
-    </flux:modal>
     <!-- Modal Único para Editar -->
     <flux:modal name="edit-project" variant="flyout">
         <form id="editProjectForm" method="POST" action="" class="space-y-6">
