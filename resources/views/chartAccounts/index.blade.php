@@ -42,10 +42,6 @@
                                             <!-- Botón Editar -->
 
                                             <flux:button
-                                                aria-haspopup="dialog"
-                                                aria-expanded="false"
-                                                aria-controls="edit-chartAccount"
-                                                data-hs-overlay="#edit-chartAccount"
                                                 size="sm"
                                                 variant="primary"
                                                 icon="pencil-square"
@@ -182,6 +178,14 @@
     <!-- Script para llenar modal dinámico -->
     <script>
         function openEditModal(chartAccount) {
+            if (window.HSOverlay) {
+                HSOverlay.autoInit();
+                HSOverlay.open('#edit-chartAccount');
+            }
+            if (window.HSSelect) {
+                HSSelect.autoInit();
+            }
+
             HSSelect.getInstance('#parent_id').setValue(chartAccount.parent_id);
             document.getElementById('name').value = chartAccount.name;
             document.getElementById('editchartAccountForm').action = `/chartAccounts/${chartAccount.id}`;

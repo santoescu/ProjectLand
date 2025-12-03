@@ -71,10 +71,6 @@
                                             size="sm"
                                             variant="primary"
                                             icon="numbered-list"
-                                            aria-haspopup="dialog"
-                                            aria-expanded="false"
-                                            aria-controls="hs-vertically-centered-modal"
-                                            data-hs-overlay="#hs-vertically-centered-modal"
                                             onclick="openHistoriesModal({{ $pay }})">
 
                                         </flux:button>
@@ -134,7 +130,7 @@
         </div>
     </div>
 
-    <div id="hs-vertically-centered-modal" class="hs-overlay hidden size-full fixed top-0 start-0 z-80 overflow-x-hidden overflow-y-auto pointer-events-none" role="dialog" tabindex="-1" aria-labelledby="hs-vertically-centered-modal-label">
+    <div id="hs-vertically-centered-modal" class="hs-overlay hidden size-full fixed top-0 start-0 z-80 overflow-x-hidden overflow-y-auto pointer-events-none" role="dialog" tabindex="-1" aria-labelledby="hs-vertically-centered-modal-label" wire:ignore>
         <div class="hs-overlay-open:mt-7 hs-overlay-open:opacity-100 hs-overlay-open:duration-500 mt-0 opacity-0 ease-out transition-all sm:max-w-lg sm:w-full m-3 sm:mx-auto min-h-[calc(100%-56px)] flex items-center">
             <div class="w-full flex flex-col bg-white border border-gray-200 shadow-2xs rounded-xl pointer-events-auto dark:bg-neutral-800 dark:border-neutral-700 dark:shadow-neutral-700/70">
                 <div class="flex justify-between items-center py-3 px-4 border-b border-gray-200 dark:border-neutral-700">
@@ -272,6 +268,11 @@
     <script>
 
         function openHistoriesModal(pay) {
+
+            if (window.HSOverlay) {
+                HSOverlay.autoInit();
+                HSOverlay.open('#hs-vertically-centered-modal');
+            }
 
             // Seleccionamos el tbody de la tabla
             const tbody = document.querySelector('#histories-table tbody');

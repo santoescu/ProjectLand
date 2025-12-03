@@ -127,10 +127,6 @@
             <flux:button
                 variant="primary"
                 icon="numbered-list"
-                aria-haspopup="dialog"
-                aria-expanded="false"
-                aria-controls="hs-vertically-centered-modal"
-                data-hs-overlay="#hs-vertically-centered-modal"
                 onclick="openHistoriesModal({{ $pay }})">
 
             </flux:button>
@@ -240,6 +236,11 @@
     <script>
 
         function openHistoriesModal(pay) {
+
+            if (window.HSOverlay) {
+                HSOverlay.autoInit();
+                HSOverlay.open('#hs-vertically-centered-modal');
+            }
 
             // Seleccionamos el tbody de la tabla
             const tbody = document.querySelector('#histories-table tbody');

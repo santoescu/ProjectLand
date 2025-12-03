@@ -36,10 +36,6 @@
                                     <td class="px-6 py-4 flex justify-center gap-2">
                                         <!-- Botón Editar -->
                                         <flux:button
-                                            aria-haspopup="dialog"
-                                            aria-expanded="false"
-                                            aria-controls="edit-project"
-                                            data-hs-overlay="#edit-project"
                                             size="sm"
                                             variant="primary"
                                             icon="pencil-square"
@@ -179,6 +175,10 @@
     <!-- Script para llenar modal dinámico -->
     <script>
         function openEditModal(project) {
+            if (window.HSOverlay) {
+                HSOverlay.autoInit();
+                HSOverlay.open('#edit-project');
+            }
             document.getElementById('name').value = project.name;
             document.getElementById('editProjectForm').action = `/projects/${project.id}`;
             document.getElementById('deleteProjectForm').action = `/projects/${project.id}` ;

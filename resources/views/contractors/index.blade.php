@@ -161,7 +161,10 @@
     <!-- Script para llenar modal dinámico -->
     <script>
         function openEditModal(contractor) {
-
+            if (window.HSOverlay) {
+                HSOverlay.autoInit();
+                HSOverlay.open('#edit-contractor');
+            }
 
             document.getElementById('company_name').value = contractor.company_name;
             document.getElementById('contact_name').value = contractor.contact_name;
