@@ -41,10 +41,6 @@
 
 
                                         <flux:button
-                                            aria-haspopup="dialog"
-                                            aria-expanded="false"
-                                            aria-controls="edit-contractor"
-                                            data-hs-overlay="#edit-contractor"
                                             size="sm"
                                             variant="primary"
                                             icon="pencil-square"
