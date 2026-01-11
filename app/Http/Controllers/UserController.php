@@ -6,6 +6,10 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
+
 
 class UserController extends Controller
 {
@@ -39,7 +43,24 @@ class UserController extends Controller
             'role' => 'required|string|in:accounting_assistant,project_manager,director,admin'
         ]);
 
-        User::create($request->all());
+        $temporaryPassword = Str::password(12);
+
+        $user = User::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'role' => $request->role,
+            'password' => Hash::make($temporaryPassword),
+        ]);
+
+        $emailData = [
+            'user' => $user,
+            'temporaryPassword' => $temporaryPassword, // 👈 la enviamos a la vista
+        ];
+
+        Mail::send('emails.newUser', $emailData, function ($message) use ($user) {
+            $message->to($user->email)
+                ->subject($user->name." Project Land - New User");
+        });
         session()->flash('toast', [
             'type' => 'success',
             'message' => __("Created :name", ['name' => __('User')])
