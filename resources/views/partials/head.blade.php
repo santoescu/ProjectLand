@@ -10,27 +10,9 @@
 <link rel="preconnect" href="https://fonts.bunny.net">
 <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" rel="stylesheet" />
 
-<script>
-    (function () {
-        try {
-            const appearance = localStorage.getItem('appearance') || 'system';
-            const root = document.documentElement;
-
-            root.classList.remove('dark');
-
-            if (appearance === 'dark') {
-                root.classList.add('dark');
-            } else if (appearance === 'system') {
-                if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-                    root.classList.add('dark');
-                }
-            }
-        } catch (e) {}
-    })();
-</script>
-
 @livewireStyles
 
 {{-- CSS y JS compilados por Vite, servidos directamente --}}
 @vite(['resources/css/app.css', 'resources/js/app.js'])
+
 

@@ -41,9 +41,13 @@
             'current' => request()->routeIs('users.index'),
         ];
     }
+
+    $appearance = session('appearance', 'light');
+    $isDark = $appearance === 'dark';
 @endphp
-<!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" >
+
+    <!DOCTYPE html>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="{{ $isDark ? 'dark' : '' }}">
 <head>
     @include('partials.head')
 </head>
