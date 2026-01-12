@@ -16,6 +16,9 @@ class Appearance extends Component
     public function updatedAppearance(string $value): void
     {
         session(['appearance' => $value]);
+        auth()->user()->update([
+            'appearance' => $value,
+        ]);
         $this->dispatch('appearance-updated');
     }
 
