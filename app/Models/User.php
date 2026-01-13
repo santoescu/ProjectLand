@@ -11,11 +11,14 @@ use Illuminate\Support\Str;
 use MongoDB\Laravel\Eloquent\Model as Eloquent;
 use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;
 use Illuminate\Auth\Authenticatable;
+use Illuminate\Contracts\Auth\CanResetPassword as CanResetPasswordContract;
+use Illuminate\Auth\Passwords\CanResetPassword;
 
 
-class User extends Eloquent implements AuthenticatableContract
+
+class User extends Eloquent implements AuthenticatableContract, CanResetPasswordContract
 {
-    use Authenticatable, Notifiable;
+    use Authenticatable, Notifiable, CanResetPassword;
 
     protected $collection = 'users'; // colección en Mongo
     protected $fillable = ['name', 'email', 'password', 'locale','role', 'appearance',];
