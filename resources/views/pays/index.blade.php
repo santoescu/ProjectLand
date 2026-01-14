@@ -18,11 +18,18 @@
                             <flux:input name="hs-table-with-pagination-search" id="hs-table-with-pagination-search"  icon="magnifying-glass" placeholder="{{__('Search')}}"/>
                         </div>
 
-                        <div class="flex items-center gap-3">
+                        <div class="flex items-center gap-5">
                             <form method="GET" action="{{ route('pays.index') }}" class="">
-
+                                <flux:select name="project_id" onchange="this.form.submit()" class="border rounded px-2 py-1">
+                                    <option value="" >{{__("Project-All")}}</option>
+                                    @foreach($projects as $project)
+                                        <option value="{{ $project->id }}"{{ request('project_id') == $project->id ? 'selected' : '' }}>{{ $project->name }}</option>
+                                    @endforeach
+                                </flux:select>
+                            </form>
+                            <form method="GET" action="{{ route('pays.index') }}" class="">
                                 <flux:select name="status" onchange="this.form.submit()" class="border rounded px-2 py-1">
-                                    <option value="" >{{__("All")}}</option>
+                                    <option value="" >{{__("Status-All")}}</option>
                                     <option value="0" {{ request('status') == '0' ? 'selected' : '' }}>{{__("Pending")}}</option>
                                     <option value="1" {{ request('status') == '1' ? 'selected' : '' }}>{{__("Rejected")}}</option>
                                     <option value="2" {{ request('status') == '2' ? 'selected' : '' }}>{{__("Paid")}}</option>
@@ -39,10 +46,11 @@
                         <table class="min-w-full divide-y divide-gray-200 dark:divide-neutral-700"  id="projectsTable">
                             <thead class="bg-gray-50 dark:bg-neutral-700">
                             <tr>
-
+                                <th scope="col" class="px-6 py-3 text-start text-xs font-medium text-gray-500 uppercase dark:text-neutral-500">{{__('Date')}}</th>
                                 <th scope="col" class="px-6 py-3 text-start text-xs font-medium text-gray-500 uppercase dark:text-neutral-500">{{__('Project')}}</th>
                                 <th scope="col" class="px-6 py-3 text-start text-xs font-medium text-gray-500 uppercase dark:text-neutral-500">{{__('Vendor')}}</th>
                                 <th scope="col" class="px-6 py-3 text-start text-xs font-medium text-gray-500 uppercase dark:text-neutral-500">{{__('Budget Code')}}</th>
+                                <th scope="col" class="px-6 py-3 text-start text-xs font-medium text-gray-500 uppercase dark:text-neutral-500">{{__('Description')}}</th>
                                 <th scope="col" class="px-6 py-3 text-start text-xs font-medium text-gray-500 uppercase dark:text-neutral-500">{{__('Amount')}}</th>
                                 <th scope="col" class="px-6 py-3 text-start text-xs font-medium text-gray-500 uppercase dark:text-neutral-500">{{__('Status')}}</th>
                                 <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase dark:text-neutral-500">{{__('Actions')}}</th>
@@ -51,9 +59,11 @@
                             <tbody class="divide-y divide-gray-200 dark:divide-neutral-700">
                             @forelse($pays as $pay)
                                 <tr >
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800 dark:text-neutral-200">{{ $pay->created_at }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800 dark:text-neutral-200">{{ $pay->project->name }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800 dark:text-neutral-200">{{ $pay->contractor->contact_name }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800 dark:text-neutral-200">{{ $pay->chartAccount->name }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800 dark:text-neutral-200">{{ $pay->description }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800 dark:text-neutral-200">{{ $pay->amount_formatted}}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800 dark:text-neutral-200"><flux:badge  :color="$pay->status_color" inset="top bottom">{{ $pay->status_label }}</flux:badge></td>
                                     <td class="px-6 py-4 flex justify-center gap-2">
@@ -105,6 +115,8 @@
                                 </tr>
                             @empty
                                 <tr>
+                                    <td></td>
+                                    <td></td>
                                     <td></td>
                                     <td></td>
                                     <td class="px-6 py-4 text-center text-gray-500">

@@ -9,7 +9,7 @@
         @csrf
 
         <div data-flux-field class="relative {{ $errors->has('project_id') ? 'error' : '' }}">
-            <label for="project_id"  class="block text-base">
+            <label for="project_id"  class="block text-base text-gray-700 dark:text-neutral-200">
                 {{ __('Project') }}
             </label>
             <select data-hs-select='{
@@ -41,7 +41,7 @@
             @enderror
         </div>
         <div data-flux-field class="relative {{ $errors->has('contractor_id') ? 'error' : '' }}">
-            <label for="contractor_id"  class="block text-base">
+            <label for="contractor_id"  class="block text-base text-gray-700 dark:text-neutral-200">
                 {{ __('Vendor') }}
             </label>
             <select data-hs-select='{
@@ -73,7 +73,7 @@
             @enderror
         </div>
         <div data-flux-field class="relative {{ $errors->has('chartAccount_id') ? 'error' : '' }}">
-            <label for="chartAccount_id"  class="block text-base">
+            <label for="chartAccount_id"  class="block text-base  text-gray-700 dark:text-neutral-200">
                 {{ __('Budget Code') }}
             </label>
             <select data-hs-select='{

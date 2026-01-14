@@ -20,11 +20,15 @@ class PayController extends Controller
         if (!is_null($request->status) && $request->status !== '') {
             $query->where('status', (int) $request->status);
         }
+        if (!is_null($request->project_id) && $request->project_id !== '') {
+            $query->where('project_id', $request->project_id);
+        }
 
 
         $pays = $query->orderBy('created_at', 'desc')->paginate(10);
+        $projects = Project::all();
 
-        return view('pays.index', compact('pays'));
+        return view('pays.index', compact('projects','pays'));
     }
     /**
      * Mostrar formulario de creación.
