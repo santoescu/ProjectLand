@@ -19,24 +19,32 @@
                         </div>
 
                         <div class="flex items-center gap-5">
-                            <form method="GET" action="{{ route('pays.index') }}" class="">
+
+
+                            <form method="GET" action="{{ route('pays.index') }}">
+                                <input type="hidden" name="status" value="{{ request('status') }}">
+
                                 <flux:select name="project_id" onchange="this.form.submit()" class="border rounded px-2 py-1">
-                                    <option value="" >{{__("Project-All")}}</option>
+                                    <option value="">{{ __("Project-All") }}</option>
                                     @foreach($projects as $project)
-                                        <option value="{{ $project->id }}"{{ request('project_id') == $project->id ? 'selected' : '' }}>{{ $project->name }}</option>
+                                        <option value="{{ $project->id }}" {{ request('project_id') == $project->id ? 'selected' : '' }}>
+                                            {{ $project->name }}
+                                        </option>
                                     @endforeach
                                 </flux:select>
                             </form>
-                            <form method="GET" action="{{ route('pays.index') }}" class="">
-                                <flux:select name="status" onchange="this.form.submit()" class="border rounded px-2 py-1">
-                                    <option value="" >{{__("Status-All")}}</option>
-                                    <option value="0" {{ request('status') == '0' ? 'selected' : '' }}>{{__("Pending")}}</option>
-                                    <option value="1" {{ request('status') == '1' ? 'selected' : '' }}>{{__("Rejected")}}</option>
-                                    <option value="2" {{ request('status') == '2' ? 'selected' : '' }}>{{__("Paid")}}</option>
-                                    <option value="3" {{ request('status') == '3' ? 'selected' : '' }}>{{__("Approved")}}</option>
-                                </flux:select>
+                            <form method="GET" action="{{ route('pays.index') }}">
+                                <input type="hidden" name="project_id" value="{{ request('project_id') }}">
 
+                                <flux:select name="status" onchange="this.form.submit()" class="border rounded px-2 py-1">
+                                    <option value="">{{ __("Status-All") }}</option>
+                                    <option value="0" {{ request('status') === '0' ? 'selected' : '' }}>{{ __("Pending") }}</option>
+                                    <option value="1" {{ request('status') === '1' ? 'selected' : '' }}>{{ __("Rejected") }}</option>
+                                    <option value="2" {{ request('status') === '2' ? 'selected' : '' }}>{{ __("Paid") }}</option>
+                                    <option value="3" {{ request('status') === '3' ? 'selected' : '' }}>{{ __("Approved") }}</option>
+                                </flux:select>
                             </form>
+
                             <a href="{{ route('pays.create') }}">
                                 <flux:button variant="filled" icon="plus">{{__('New')}}</flux:button>
                             </a>
