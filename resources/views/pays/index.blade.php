@@ -56,6 +56,7 @@
                             <tr>
                                 <th scope="col" class="px-6 py-3 text-start text-xs font-medium text-gray-500 uppercase dark:text-neutral-500">{{__('Date')}}</th>
                                 <th scope="col" class="px-6 py-3 text-start text-xs font-medium text-gray-500 uppercase dark:text-neutral-500">{{__('Project')}}</th>
+                                <th scope="col" class="px-6 py-3 text-start text-xs font-medium text-gray-500 uppercase dark:text-neutral-500">{{__('Subproject')}}</th>
                                 <th scope="col" class="px-6 py-3 text-start text-xs font-medium text-gray-500 uppercase dark:text-neutral-500">{{__('Vendor')}}</th>
                                 <th scope="col" class="px-6 py-3 text-start text-xs font-medium text-gray-500 uppercase dark:text-neutral-500">{{__('Budget Code')}}</th>
                                 <th scope="col" class="px-6 py-3 text-start text-xs font-medium text-gray-500 uppercase dark:text-neutral-500">{{__('Description')}}</th>
@@ -69,6 +70,7 @@
                                 <tr >
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800 dark:text-neutral-200">{{ $pay->created_at }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800 dark:text-neutral-200">{{ $pay->project->name }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800 dark:text-neutral-200">{{ $pay->subproject }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800 dark:text-neutral-200">{{ $pay->contractor->contact_name }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800 dark:text-neutral-200">{{ $pay->chartAccount->name }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800 dark:text-neutral-200">{{ $pay->description }}</td>
@@ -131,6 +133,7 @@
                                         {{ __('There are no registered :name.', ['name'=>__('projects')]) }}
                                     </td>
 
+                                    <td></td>
                                     <td></td>
                                     <td></td>
                                     <td></td>
