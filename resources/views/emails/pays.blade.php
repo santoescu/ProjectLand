@@ -74,6 +74,9 @@
         <h2>{{__("New :name", ['name' => __('Payable')])}}</h2>
 
         <p><strong>{{__('Project')}}</strong> {{ $pay->project->name ?? '' }}</p>
+        @if(!blank($pay->subproject ?? null))
+            <p><strong>{{ __('Subproject') }}</strong> {{ $pay->subproject }}</p>
+        @endif
         <p><strong>{{__('Amount')}}</strong> ${{ number_format($pay->amount, 2) }}</p>
         <p><strong>{{__('Vendors')}}</strong> {{ $pay->contractor->company_name ?? '' }}</p>
         <p><strong>{{__('Budget Code')}}:</strong> {{ $pay->chartAccount->name ?? '' }}</p>

@@ -4,7 +4,25 @@
     'title' => __("Edit :name", ['name' => __('Payable')]) ,
     'subheading' => ""
     ])
+    <style>
+        .subproject-field{
+            display:flex;
+            flex-direction:column;
+            gap:.5rem;
+        }
 
+
+        .subproject-field .sp-label{ order: 1; }
+
+
+        .subproject-field .hs-select{ order: 2; }
+
+
+        .subproject-field .hs-dropdown{ order: 3; }
+
+
+        .subproject-field .sp-select{ order: 4; }
+    </style>
     @php
         $userRole = $user->role ?? null;
     @endphp
@@ -13,11 +31,37 @@
     <form method="POST" action="{{ route('pays.updateEmail', ['id' => $pay->_id, 'user_id' => $user->_id]) }}" class="space-y-4 max-w-xl mx-auto">
         @csrf
         @method('PUT')
-        <div data-flux-field class="relative {{ $errors->has('project_id') ? 'error' : '' }}">
-            <label for="project_id"  class="block text-base">
-                {{ __('Project') }}
-            </label>
-            <select data-hs-select='{
+        @php
+            // Mapa liviano para el front (id, name, subprojects)
+            $projectsForFront = $projects->map(function ($p) {
+                return [
+                    'id' => (string) $p->_id,
+                    'name' => $p->name,
+                    'subprojects' => is_array($p->subprojects ?? null) ? $p->subprojects : [],
+                ];
+            })->values();
+        @endphp
+        @php
+            $initialProjectId = (string) old('project_id', $pay->project_id ?? '');
+            $initialSubproject = (string) old('subproject', $pay->subproject ?? '');
+        @endphp
+
+
+
+        <div x-data="subprojectSelect({
+                projects: @js($projectsForFront),
+                initialProjectId: @js($initialProjectId),
+                initialSubproject: @js($initialSubproject)
+              })"
+            x-init="init()">
+
+        <div data-flux-field class="relative {{ $errors->has('project_id') ? 'error' : '' }}" wire:ignore>
+                <label for="project_id" class="block text-base text-gray-700 dark:text-neutral-200">
+                    {{ __('Project') }}
+                </label>
+
+                <select
+                    data-hs-select='{
                       "hasSearch": true,
                       "optionAllowEmptyOption": true,
                       "minSearchLength": 3,
@@ -33,22 +77,65 @@
                       "extraMarkup": [
                         "<div class=\"hidden hs-error:block absolute top-1/2 end-8 -translate-y-1/2\"><svg class=\"shrink-0 size-4 text-red-500\" xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"10\"/><line x1=\"12\" x2=\"12\" y1=\"8\" y2=\"12\"/><line x1=\"12\" x2=\"12.01\" y1=\"16\" y2=\"16\"/></svg></div>",
                         "<div class=\"absolute top-1/2 end-3 -translate-y-1/2\"><svg class=\"shrink-0 size-3.5 text-gray-500 dark:text-neutral-500 \" xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"m7 15 5 5 5-5\"/><path d=\"m7 9 5-5 5 5\"/></svg></div>"
-                        ]
-                    }' id="project_id" name="project_id" :value="old('project_id')" class="hidden" {{ in_array($pay->status, [1, 2, 3]) ? 'disabled' : '' }}>
-                <option value=""></option>
-                @foreach($projects as $project)
-                    <option value="{{ $project->_id }}" {{ old('project_id', $pay->project_id) == $project->_id ? 'selected' : '' }}>
-                        {{ $project->name }}
-                    </option>
-                    @endforeach
+                      ]
+                    }'
+                    id="project_id"
+                    name="project_id"
+                    class="hidden"
+                    @change="onProjectChange($event.target.value)">
+                    <option value=""></option>
+                    @foreach($projects as $project)
+                        <option value="{{ $project->_id }}"
+                            {{ old('project_id', $pay->project_id) == $project->_id ? 'selected' : '' }}>
+                            {{ $project->name }}
+                        </option>
 
-            </select>
-            @error('project_id')
-            <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
-            @enderror
+                    @endforeach
+                </select>
+
+                @error('project_id')
+                <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                @enderror
+            </div>
+            <div x-show="showSubproject" x-cloak class="mt-4 subproject-field" wire:ignore>
+                <label class="block text-base text-gray-700 dark:text-neutral-200 mb-2 sp-label">
+                    {{ __('Subproject') }}
+                </label>
+
+                <div id="subproject_toggle" class="w-full sp-toggle"></div>
+
+                <select
+                    id="subproject"
+                    name="subproject"
+                    class="hidden sp-select"
+                    data-hs-select='{
+                      "hasSearch": true,
+                      "optionAllowEmptyOption": true,
+                      "minSearchLength": 3,
+                      "searchPlaceholder": "{{__('Search')}}",
+                      "searchClasses": "block w-full sm:text-sm border-gray-200 rounded-lg focus:border-blue-500 focus:ring-blue-500 before:absolute before:inset-0 before:z-1 dark:bg-neutral-700 dark:border-neutral-700 dark:text-neutral-400 dark:placeholder-neutral-500 py-1.5 sm:py-2 px-3",
+                      "searchWrapperClasses": "bg-white p-2 -mx-1 sticky top-0 dark:bg-neutral-700",
+                      "placeholder": "{{__('Select')}}",
+                      "toggleTag": "<button type=\"button\" aria-expanded=\"false\" data-hs-select-toggle=\"#subproject_toggle\"><span class=\"me-2\" data-icon></span><span class=\"text-gray-800 dark:text-neutral-200\" data-title></span></button>",
+                      "toggleClasses": "hs-select-disabled:pointer-events-none hs-select-disabled:opacity-50 relative py-3 ps-4 pe-9 flex gap-x-2 text-nowrap w-full cursor-pointer bg-white border border-gray-200 rounded-lg text-start text-sm focus:outline-hidden focus:ring-2 focus:ring-blue-500 dark:bg-neutral-700 dark:border-neutral-700 dark:text-neutral-400 dark:focus:outline-hidden dark:focus:ring-1 dark:focus:ring-neutral-600",
+                      "dropdownClasses": "mt-2 max-h-72 pb-1 px-1 space-y-0.5 z-20 w-full bg-white border border-gray-200 rounded-lg overflow-hidden overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-gray-100 [&::-webkit-scrollbar-thumb]:bg-gray-300 dark:[&::-webkit-scrollbar-track]:bg-neutral-700 dark:[&::-webkit-scrollbar-thumb]:bg-neutral-500 dark:bg-neutral-700 dark:border-neutral-700",
+                      "optionClasses": "py-2 px-4 w-full text-sm text-gray-800 cursor-pointer hover:bg-gray-100 rounded-lg focus:outline-hidden focus:bg-gray-100 dark:bg-neutral-700 dark:hover:bg-neutral-800 dark:text-neutral-200 dark:focus:bg-neutral-800",
+                      "optionTemplate": "<div class=\"flex justify-between items-center w-full\"><span data-title></span><span class=\"hidden hs-selected:block\"><svg class=\"shrink-0 size-3.5 text-black dark:text-white\" xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><polyline points=\"20 6 9 17 4 12\"/></svg></span></div>",
+                      "extraMarkup": [
+                            "<div class=\"hidden hs-error:block absolute top-1/2 end-8 -translate-y-1/2\"><svg class=\"shrink-0 size-4 text-red-500\" xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"10\"/><line x1=\"12\" x2=\"12\" y1=\"8\" y2=\"12\"/><line x1=\"12\" x2=\"12.01\" y1=\"16\" y2=\"16\"/></svg></div>",
+                            "<div class=\"absolute top-1/2 end-3 -translate-y-1/2\"><svg class=\"shrink-0 size-3.5 text-gray-500 dark:text-neutral-500 \" xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"m7 15 5 5 5-5\"/><path d=\"m7 9 5-5 5 5\"/></svg></div>"
+                        ]
+                      }'>
+                    <option value=""></option>
+                </select>
+                @error('subproject')
+                <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                @enderror
+            </div>
+
         </div>
         <div data-flux-field class="relative {{ $errors->has('contractor_id') ? 'error' : '' }}">
-            <label for="contractor_id"  class="block text-base">
+            <label for="contractor_id"  class="block text-base text-gray-700 dark:text-neutral-200">
                 {{ __('Vendor') }}
             </label>
             <select data-hs-select='{
@@ -68,7 +155,7 @@
                         "<div class=\"hidden hs-error:block absolute top-1/2 end-8 -translate-y-1/2\"><svg class=\"shrink-0 size-4 text-red-500\" xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"10\"/><line x1=\"12\" x2=\"12\" y1=\"8\" y2=\"12\"/><line x1=\"12\" x2=\"12.01\" y1=\"16\" y2=\"16\"/></svg></div>",
                         "<div class=\"absolute top-1/2 end-3 -translate-y-1/2\"><svg class=\"shrink-0 size-3.5 text-gray-500 dark:text-neutral-500 \" xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"m7 15 5 5 5-5\"/><path d=\"m7 9 5-5 5 5\"/></svg></div>"
                         ]
-                      }' id="contractor_id" name="contractor_id" :value="old('contractor_id')" {{ in_array($pay->status, [1, 2, 3]) ? 'disabled' : '' }}>
+                      }' id="contractor_id" name="contractor_id"  {{ in_array($pay->status, [1, 2, 3]) ? 'disabled' : '' }}>
                 <option value=""></option>
                 @foreach($contractors as $contractor)
                     <option value="{{ $contractor->_id }}" {{ old('contractor_id', $pay->contractor_id) == $contractor->_id ? 'selected' : '' }}>
@@ -82,7 +169,7 @@
             @enderror
         </div>
         <div data-flux-field class="relative {{ $errors->has('chartAccount_id') ? 'error' : '' }}">
-            <label for="chartAccount_id"  class="block text-base">
+            <label for="chartAccount_id"  class="block text-base text-gray-700 dark:text-neutral-200">
                 {{ __('Budget Code') }}
             </label>
             <select data-hs-select='{
@@ -102,7 +189,7 @@
                         "<div class=\"hidden hs-error:block absolute top-1/2 end-8 -translate-y-1/2\"><svg class=\"shrink-0 size-4 text-red-500\" xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"10\"/><line x1=\"12\" x2=\"12\" y1=\"8\" y2=\"12\"/><line x1=\"12\" x2=\"12.01\" y1=\"16\" y2=\"16\"/></svg></div>",
                         "<div class=\"absolute top-1/2 end-3 -translate-y-1/2\"><svg class=\"shrink-0 size-3.5 text-gray-500 dark:text-neutral-500 \" xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"m7 15 5 5 5-5\"/><path d=\"m7 9 5-5 5 5\"/></svg></div>"
                         ]
-                      }' id="chartAccount_id" name="chartAccount_id" :value="old('chartAccount_id')" {{ in_array($pay->status, [1, 2, 3]) ? 'disabled' : '' }}>
+                      }' id="chartAccount_id" name="chartAccount_id"  {{ in_array($pay->status, [1, 2, 3]) ? 'disabled' : '' }}>
                 <option value=""></option>
                 @foreach($chartAccounts as $chartAccount)
                     <option value="{{ $chartAccount->_id }}" {{ old('chartAccount_id', $pay->chartAccount_id) == $chartAccount->_id ? 'selected' : '' }}>
@@ -266,9 +353,15 @@
     <script>
         document.addEventListener('load.hs.select', function() {
             const select = document.getElementById('project_id');
-            if (select && !select.value) {
-                select.value = "{{ old('project_id', $pay->project_id) }}";
-            }
+            if (!select) return;
+
+            const value = "{{ old('project_id', $pay->project_id) }}";
+
+            // Setear valor
+            select.value = value;
+
+            // Disparar change para que Alpine ejecute onProjectChange
+            select.dispatchEvent(new Event('change', { bubbles: true }));
         });
     </script>
 
@@ -310,6 +403,115 @@
                 });
             });
         </script>
+        <script>
+            document.addEventListener('alpine:init', () => {
+                Alpine.data('subprojectSelect', ({ projects, initialProjectId, initialSubproject }) => ({
+                    projects,
+                    showSubproject: false,
+
+                    init() {
+                        // 1) setea project nativo
+                        if (initialProjectId) {
+                            this.setNative('#project_id', initialProjectId);
+
+                            // 2) carga subs y selecciona subproject guardado
+                            this.onProjectChange(initialProjectId, initialSubproject || '');
+                        }
+                    },
+
+                    onProjectChange(projectId, subprojectToSelect = '') {
+                        const p = this.projects.find(x => x.id === projectId);
+                        const subs = (p && Array.isArray(p.subprojects)) ? p.subprojects : [];
+
+                        this.showSubproject = subs.length > 0;
+
+                        this.$nextTick(() => {
+                            if (!this.showSubproject) {
+                                this.destroyHS('#subproject');
+                                this.setNative('#subproject', '');
+                                return;
+                            }
+
+                            // 1) llena options
+                            this.fillSubprojectOptions(subs);
+
+                            // 2) pone el value ANTES de inicializar HSSelect
+                            this.setNative('#subproject', subprojectToSelect || '');
+
+                            // 3) destruye instancia previa y reconstruye SOLO ese select
+                            requestAnimationFrame(() => {
+                                this.rebuildHS('#subproject');
+
+                                // 4) refuerza el valor luego de que HSSelect ya montó UI
+                                requestAnimationFrame(() => {
+                                    this.setNative('#subproject', subprojectToSelect || '');
+                                });
+                            });
+                        });
+                    },
+
+                    fillSubprojectOptions(subs) {
+                        const el = document.querySelector('#subproject');
+                        if (!el) return;
+
+                        el.innerHTML =
+                            '<option value=""></option>' +
+                            subs.map(sp => `<option value="${this.escapeHtml(sp)}">${this.escapeHtml(sp)}</option>`).join('');
+                    },
+
+                    // ✅ seteo nativo y dispara change (sin HSSelect.setValue)
+                    setNative(selector, value) {
+                        const el = document.querySelector(selector);
+                        if (!el) return;
+                        el.value = value ?? '';
+                        el.dispatchEvent(new Event('change', { bubbles: true }));
+                    },
+
+                    // ✅ destruye de forma segura sin depender de getInstance(selector)
+                    destroyHS(selector) {
+                        if (!window.HSSelect) return;
+                        const el = document.querySelector(selector);
+                        if (!el) return;
+
+                        const inst = window.HSSelect.getInstance(el);
+                        if (inst && typeof inst.destroy === 'function') inst.destroy();
+
+                        // limpia el holder del toggle (si aplica)
+                        const toggleHolder = document.querySelector('#subproject_toggle');
+                        if (toggleHolder) toggleHolder.innerHTML = '';
+                    },
+
+                    // ✅ reconstruye SOLO el subproject (no autoInit global)
+                    rebuildHS(selector) {
+                        if (!window.HSSelect) return;
+
+                        const el = document.querySelector(selector);
+                        if (!el) return;
+
+                        // destruye lo anterior
+                        const inst = window.HSSelect.getInstance(el);
+                        if (inst && typeof inst.destroy === 'function') inst.destroy();
+
+                        const toggleHolder = document.querySelector('#subproject_toggle');
+                        if (toggleHolder) toggleHolder.innerHTML = '';
+
+                        // crea instancia SOLO para este select
+                        new window.HSSelect(el);
+                    },
+
+                    escapeHtml(str) {
+                        return String(str)
+                            .replaceAll('&', '&amp;')
+                            .replaceAll('<', '&lt;')
+                            .replaceAll('>', '&gt;')
+                            .replaceAll('"', '&quot;')
+                            .replaceAll("'", '&#039;');
+                    }
+                }));
+            });
+        </script>
+
+
     @endpush
 
 

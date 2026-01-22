@@ -39,13 +39,12 @@
             })->values();
         @endphp
 
-        <div
-            x-data="subprojectSelect({
+        <div x-data="subprojectSelect({
                 projects: @js($projectsForFront),
                 oldProjectId: @js(old('project_id')),
                 oldSubproject: @js(old('subproject'))
-            })"
-            x-init="init()">
+                })"
+             x-init="init()">
 
             <div data-flux-field class="relative {{ $errors->has('project_id') ? 'error' : '' }}" wire:ignore>
                 <label for="project_id" class="block text-base text-gray-700 dark:text-neutral-200">
@@ -123,9 +122,9 @@
                 @enderror
             </div>
 
+        </div>
 
-
-            <div data-flux-field class="relative {{ $errors->has('contractor_id') ? 'error' : '' }}">
+        <div data-flux-field class="relative {{ $errors->has('contractor_id') ? 'error' : '' }}">
             <label for="contractor_id"  class="block text-base text-gray-700 dark:text-neutral-200">
                 {{ __('Vendor') }}
             </label>
@@ -204,6 +203,7 @@
                 <flux:button variant="ghost">{{__('Cancel')}}</flux:button>
             </a>
         </div>
+
 
     </form>
     <script>
