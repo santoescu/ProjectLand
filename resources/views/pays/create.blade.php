@@ -148,7 +148,7 @@
                       }' id="contractor_id" name="contractor_id" :value="old('contractor_id')">
                 <option value=""></option>
                 @foreach($contractors as $contractor)
-                    <option value="{{ $contractor->_id }}" {{ old('contractor_id') == $contractor->_id ? 'selected' : '' }}>{{ $contractor->contact_name }} - {{ $contractor->company_name }}</option>
+                    <option value="{{ $contractor->_id }}" {{ old('contractor_id') == $contractor->_id ? 'selected' : '' }}>{{ $contractor->company_name }} - {{ $contractor->contact_name }}</option>
                 @endforeach
 
             </select>

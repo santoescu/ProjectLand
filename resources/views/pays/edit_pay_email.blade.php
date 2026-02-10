@@ -159,7 +159,7 @@
                 <option value=""></option>
                 @foreach($contractors as $contractor)
                     <option value="{{ $contractor->_id }}" {{ old('contractor_id', $pay->contractor_id) == $contractor->_id ? 'selected' : '' }}>
-                        {{ $contractor->contact_name }} - {{ $contractor->company_name }}
+                        {{ $contractor->company_name }} - {{ $contractor->contact_name }}
                     </option>
                 @endforeach
 
