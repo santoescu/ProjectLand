@@ -64,12 +64,15 @@ RUN composer install --no-interaction --prefer-dist --optimize-autoloader
 RUN npm install && npm run build
 
 # Permisos
-RUN chmod -R 777 storage bootstrap/cache
+RUN chown -R www-data:www-data storage bootstrap/cache
 
-# Puerto de Cloud Run
-# Cloud Run escucha en el 8080
+# Nginx config
+RUN rm -f /etc/nginx/sites-enabled/default
+COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
+
+# Cloud Run port
 EXPOSE 8080
 
-# Servir Laravel
-CMD php -S 0.0.0.0:8080 -t public
+# Start both (nginx foreground)
+CMD ["sh", "-c", "php-fpm -D && nginx -g 'daemon off;'"]
 
