@@ -264,7 +264,7 @@
                 <div>
                     <table id="histories-table" class="w-full table-auto border ">
                         <thead>
-                        <tr >
+                        <tr class="border px-2 py-1 text-base text-gray-700 dark:text-neutral-200">
                             <th class="border px-2 py-1">{{__('Users')}}</th>
                             <th class="border px-2 py-1">{{__('Actions')}}</th>
                             <th class="border px-2 py-1">{{__('Date')}}</th>
@@ -337,9 +337,9 @@
                 pay.histories.forEach(history => {
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
-                <td class="border px-2 py-1">${history.user_name}</td>
-                <td class="border px-2 py-1">${history.action}</td>
-                <td class="border px-2 py-1">${new Date(history.created_at).toLocaleString()}</td>
+                <td class="border px-2 py-1 text-base text-gray-700 dark:text-neutral-200">${history.user_name}</td>
+                <td class="border px-2 py-1 text-base text-gray-700 dark:text-neutral-200">${history.action}</td>
+                <td class="border px-2 py-1 text-base text-gray-700 dark:text-neutral-200">${new Date(history.created_at).toLocaleString()}</td>
             `;
                     tbody.appendChild(tr);
                 });
