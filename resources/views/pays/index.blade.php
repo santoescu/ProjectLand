@@ -121,6 +121,18 @@
                                                 </flux:button>
                                             </a>
                                         @endif
+                                        @if (in_array($userRole, ['accounting_assistant','director','admin']) && in_array($pay->status, [ 0,]))
+
+                                            <flux:modal.trigger name="confirm-delete-pay">
+                                                <flux:button
+                                                    size="sm"
+                                                    type="button"
+                                                    icon="archive-box-x-mark"
+                                                    variant="danger"
+                                                    onclick='openDeleteModal({{$pay}})'>
+                                                </flux:button>
+                                            </flux:modal.trigger>
+                                        @endif
                                     </td>
                                 </tr>
                             @empty
@@ -193,6 +205,52 @@
         </div>
     </div>
 
+    <!-- Modal de confirmación -->
+    <flux:modal name="confirm-delete-pay" class="md:w-96" :dismissible="true">
+        <div class="space-y-6">
+            <div>
+                <flux:heading size="lg">{{ __("Delete :name?", ['name' => __('Pay')]) }}</flux:heading>
+                <label   class="block text-base  text-gray-700 dark:text-neutral-200">
+                    <p>{{ __("You're about to delete this :name.", ['name' => __('Pay')]) }}</p>
+                    <p>{{ __('This action cannot be reversed.') }}</p>
+                </label>
+
+            </div>
+            <div class="flex gap-2">
+                <flux:spacer />
+                <!-- Botón cancelar -->
+                <flux:modal.close >
+                    <flux:button variant="ghost" x-on:click="$flux.modal('confirm-delete').close()">
+                        {{ __('Cancel') }}
+                    </flux:button>
+                </flux:modal.close>
+                <!-- Botón confirmar -->
+                <form id="deletechartAccountForm" action="" method="POST">
+                    @csrf
+                    @method('DELETE')
+                    <flux:button type="submit" variant="danger" icon="archive-box-x-mark">
+                        {{ __('Delete') }}
+                    </flux:button>
+                </form>
+            </div>
+        </div>
+    </flux:modal>
+
+    <script>
+        function openDeleteModal(chartAccount) {
+            if (window.HSOverlay) {
+                HSOverlay.autoInit();
+                HSOverlay.open('#confirm-delete-pay');
+            }
+            if (window.HSSelect) {
+                HSSelect.autoInit();
+            }
+
+            document.getElementById('deletechartAccountForm').action = `/pays/${chartAccount.id}` ;
+        }
+
+    </script>
+
     <!-- Modal Único para Editar -->
     <flux:modal name="edit-project" variant="flyout">
         <form id="editProjectForm" method="POST" action="" class="space-y-6">
@@ -254,36 +312,6 @@
                 </flux:modal.trigger>
             </div>
         </form>
-    </flux:modal>
-
-    <!-- Modal de confirmación -->
-    <flux:modal name="confirm-delete" class="md:w-96" :dismissible="true">
-        <div class="space-y-6">
-            <div>
-                <flux:heading size="lg">{{ __("Delete :name?", ['name' => __('Project')]) }}</flux:heading>
-                <flux:text class="mt-2">
-                    <p>{{ __("You're about to delete this :name.", ['name' => __('project')]) }}</p>
-                    <p>{{ __('This action cannot be reversed.') }}</p>
-                </flux:text>
-            </div>
-            <div class="flex gap-2">
-                <flux:spacer />
-                <!-- Botón cancelar -->
-                <flux:modal.close >
-                    <flux:button variant="ghost" x-on:click="$flux.modal('confirm-delete').close()">
-                        {{ __('Cancel') }}
-                    </flux:button>
-                </flux:modal.close>
-                <!-- Botón confirmar -->
-                <form id="deleteProjectForm" action="" method="POST">
-                    @csrf
-                    @method('DELETE')
-                    <flux:button type="submit" variant="danger" icon="archive-box-x-mark">
-                        {{ __('Delete') }}
-                    </flux:button>
-                </form>
-            </div>
-        </div>
     </flux:modal>
 
 

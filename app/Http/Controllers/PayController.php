@@ -259,6 +259,18 @@ class PayController extends Controller
         return redirect()->route('pays.updatePay', ['id' => $pay->_id, 'user_id' => $user->_id]);
 
     }
+    public function destroy(string $id)
+    {
+        $chartAccount = Pay::findOrFail($id);
+        $chartAccount->delete();
+
+        session()->flash('toast', [
+            'type' => 'success',
+            'message' => __("Deleted :name", ['name' => __('Pay')])
+        ]);
+
+        return redirect()->route('pays.index');
+    }
 
 
 
