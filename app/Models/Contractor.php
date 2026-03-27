@@ -13,6 +13,7 @@ class Contractor extends Model
         'company_name',
         'contact_name',
         'contact_phone',
+        'contact_email',
         'payment_method',
     ];
 }

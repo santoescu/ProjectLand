@@ -37,7 +37,8 @@ class ContractorController extends Controller
         $request->validate([
             'company_name'   => 'required|string|max:255',
             'contact_name'   => 'required|string|max:255',
-            'contact_phone'  => 'required|string|max:20',
+            'contact_phone'  => 'nullable|string|max:20|required_without:contact_email',
+            'contact_email'  => 'nullable|email|max:255|required_without:contact_phone',
             'payment_method' => 'required|string|in:Zelle,ACH,Wire'
         ]);
 
@@ -60,7 +61,8 @@ class ContractorController extends Controller
         $request->validate([
             'company_name'   => 'required|string|max:255',
             'contact_name'   => 'required|string|max:255',
-            'contact_phone'  => 'required|string|max:20',
+            'contact_phone'  => 'nullable|string|max:20|required_without:contact_email',
+            'contact_email'  => 'nullable|email|max:255|required_without:contact_phone',
             'payment_method' => 'required|string|in:Zelle,ACH,Wire'
         ]);
 

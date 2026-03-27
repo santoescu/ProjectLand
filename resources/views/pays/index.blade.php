@@ -278,20 +278,7 @@
 
 
 
-    <script>
-        function openDeleteModal(pay) {
-            if (window.HSOverlay) {
-                HSOverlay.autoInit();
-                HSOverlay.open('#confirm-delete-pay-modal');
-            }
-            if (window.HSSelect) {
-                HSSelect.autoInit();
-            }
 
-            document.getElementById('deletePayForm').action = `/pays/${pay.id}` ;
-        }
-
-    </script>
 
     <!-- Modal Único para Editar -->
     <flux:modal name="edit-project" variant="flyout">
@@ -357,40 +344,48 @@
     </flux:modal>
 
 
-    <!-- Script para llenar modal dinámico -->
-    <script>
 
-        function openHistoriesModal(pay) {
 
-            if (window.HSOverlay) {
-                HSOverlay.autoInit();
-                HSOverlay.open('#hs-vertically-centered-modal');
+    @push('scripts')
+        <script>
+            function openDeleteModal(pay) {
+                if (window.HSOverlay) {
+                    HSOverlay.autoInit();
+                    HSOverlay.open('#confirm-delete-pay-modal');
+                }
+
+
+                document.getElementById('deletePayForm').action = `/pays/${pay.id}` ;
             }
+            function openHistoriesModal(pay) {
 
-            // Seleccionamos el tbody de la tabla
-            const tbody = document.querySelector('#histories-table tbody');
-            tbody.innerHTML = '';
+                if (window.HSOverlay) {
+                    HSOverlay.autoInit();
+                    HSOverlay.open('#hs-vertically-centered-modal');
+                }
 
-            if (pay.histories && pay.histories.length > 0) {
-                pay.histories.forEach(history => {
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
+                // Seleccionamos el tbody de la tabla
+                const tbody = document.querySelector('#histories-table tbody');
+                tbody.innerHTML = '';
+
+                if (pay.histories && pay.histories.length > 0) {
+                    pay.histories.forEach(history => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
                 <td class="border px-2 py-1 text-base  text-gray-700 dark:text-neutral-200">${history.user_name}</td>
                 <td class="border px-2 py-1 text-base  text-gray-700 dark:text-neutral-200">${history.action}</td>
                 <td class="border px-2 py-1 text-base  text-gray-700 dark:text-neutral-200">${new Date(history.created_at).toLocaleString()}</td>
             `;
+                        tbody.appendChild(tr);
+                    });
+                } else {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `<td colspan="4" class="border px-2 py-1 text-center">No hay historial</td>`;
                     tbody.appendChild(tr);
-                });
-            } else {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `<td colspan="4" class="border px-2 py-1 text-center">No hay historial</td>`;
-                tbody.appendChild(tr);
+                }
             }
-        }
-    </script>
 
-    @push('scripts')
-        <script>
+
             $(document).ready(function () {
                 // Inicializamos DataTable
                 let table = $('#projectsTable').DataTable({

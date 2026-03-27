@@ -62,7 +62,7 @@ class PayController extends Controller
             [
                 'user_id' => Auth::id(),
                 'user_name' => Auth::user()->name,
-                'action' => 'created',
+                'action' => 'Created',
                 'created_at' => now()
             ]
         ];
@@ -123,7 +123,7 @@ class PayController extends Controller
             [
                 'user_id' => Auth::id(),
                 'user_name' => Auth::user()->name,
-                'action' => 'updated',
+                'action' => 'Updated',
                 'created_at' => now()
             ];
 
@@ -243,7 +243,7 @@ class PayController extends Controller
             [
                 'user_id' => $user->_id,
                 'user_name' => $user->name,
-                'action' => 'updated',
+                'action' => 'Updated',
                 'created_at' => now()
             ];
 

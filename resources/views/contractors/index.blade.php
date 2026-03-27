@@ -3,6 +3,10 @@
         'title' => __('Vendors'),
         'subheading' => __('Management of registered :name',['name'=> __('vendors')])
     ])
+    @php
+        $userRole = Auth::user()->role;
+        $userId = Auth::id();
+    @endphp
 
     <div class="flex flex-col">
         <div class="-m-1.5 overflow-x-auto">
@@ -26,6 +30,7 @@
                                 <th scope="col" class="px-6 py-3 text-start text-xs font-medium text-gray-500 uppercase dark:text-neutral-500">{{__('Company')}}</th>
                                 <th scope="col" class="px-6 py-3 text-start text-xs font-medium text-gray-500 uppercase dark:text-neutral-500">{{__('Contact')}}</th>
                                 <th scope="col" class="px-6 py-3 text-start text-xs font-medium text-gray-500 uppercase dark:text-neutral-500">{{__('Phone')}}</th>
+                                <th scope="col" class="px-6 py-3 text-start text-xs font-medium text-gray-500 uppercase dark:text-neutral-500">{{__('Email')}}</th>
                                 <th scope="col" class="px-6 py-3 text-start text-xs font-medium text-gray-500 uppercase dark:text-neutral-500">{{__('Payment method')}}</th>
                                 <th scope="col" class="px-6 py-3 text-end text-xs font-medium text-gray-500 uppercase dark:text-neutral-500">{{__('Actions')}}</th>
                             </tr>
@@ -36,6 +41,7 @@
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800 dark:text-neutral-200">{{ $contractor->company_name }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800 dark:text-neutral-200">{{ $contractor->contact_name }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800 dark:text-neutral-200">{{ $contractor->contact_phone }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800 dark:text-neutral-200">{{ $contractor->contact_email }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800 dark:text-neutral-200">{{ $contractor->payment_method }}</td>
                                     <td class="px-6 py-4 flex justify-center gap-2">
 
@@ -47,6 +53,24 @@
                                             onclick='openEditModal({{$contractor}})'>
 
                                         </flux:button>
+                                        <!--
+                                        @if (in_array($userRole, ['accounting_assistant','director','admin']) )
+                                            <a href="">
+                                                <flux:button
+                                                    size="sm"
+                                                    variant="primary"
+                                                    icon="document-text">
+                                                </flux:button>
+                                            </a>
+                                            <a href="">
+                                                <flux:button
+                                                    size="sm"
+                                                    variant="primary"
+                                                    icon="document-plus">
+                                                </flux:button>
+                                            </a>
+                                        @endif
+                                        -->
                                     </td>
                                 </tr>
                             @empty
@@ -96,6 +120,7 @@
                 <flux:input id="company_name" label="{{__('Company')}}" name="company_name"  />
                 <flux:input id="contact_name" label="{{__('Contact')}}" name="contact_name"  />
                 <flux:input id="contact_phone" label="{{__('Phone')}}" name="contact_phone"  />
+                <flux:input id="contact_email" label="{{__('Email')}}" name="contact_email"  />
 
                 <flux:select id="payment_method" label="{{__('Payment method')}}" name="payment_method" >
                     <option value="Zelle">Zelle</option>
@@ -115,6 +140,7 @@
                             variant="danger">
                         </flux:button>
                     </flux:modal.trigger>
+
                 </div>
             </form>
         </div>
@@ -165,6 +191,7 @@
             document.getElementById('company_name').value = contractor.company_name;
             document.getElementById('contact_name').value = contractor.contact_name;
             document.getElementById('contact_phone').value = contractor.contact_phone;
+            document.getElementById('contact_email').value = contractor.contact_email;
             document.getElementById('payment_method').value = contractor.payment_method;
             document.getElementById('editContractorForm').action = `/contractors/${contractor.id}`;
             document.getElementById('deleteContractorForm').action = `/contractors/${contractor.id}` ;

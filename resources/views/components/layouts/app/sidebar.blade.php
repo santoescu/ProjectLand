@@ -18,6 +18,12 @@
             'url' => route('contractors.index'),
             'current' => request()->routeIs('contractors.index'),
         ];
+        $groups[] = [
+            'name' => __('Contracts'),
+            'icon' => 'clipboard-document-check',
+            'url' => route('contracts.index'),
+            'current' => request()->routeIs('contracts.index'),
+        ];
 
         $groups[] = [
             'name' => __('Projects'),

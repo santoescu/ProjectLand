@@ -367,5 +367,10 @@
     "vendor": "contratista",
     "vendors": "contratistas",
     "Notes": "Notas",
-    "HI": "HOLA"
+    "HI": "HOLA",
+    "Contract": "Contrato",
+    "Contracts": "Contratos",
+    "contract": "contrato",
+    "contracts": "contratos",
+    "Compensation": "Compensación"
 }

@@ -5,6 +5,7 @@ use App\Livewire\Settings\Password;
 use App\Livewire\Settings\Profile;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ContractorController;
+use App\Http\Controllers\ContractController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ChartAccountController;
@@ -30,6 +31,7 @@ Route::middleware(['auth'])->group(function () {
 
     Route::middleware(['role:accounting_assistant,director,admin'])->group(function () {
         Route::resource('contractors', ContractorController::class);
+        Route::resource('contracts', ContractController::class);
         Route::resource('projects', ProjectController::class);
         Route::resource('chartAccounts', ChartAccountController::class)->except(['show']);
         Route::get('chartAccounts/tree', [ChartAccountController::class, 'tree'])

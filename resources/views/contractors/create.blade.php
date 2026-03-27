@@ -13,6 +13,7 @@
         <flux:input label="{{__('Contact')}}" name="contact_name" :value="old('contact_name')" />
 
         <flux:input label="{{__('Phone')}}" name="contact_phone" :value="old('contact_phone')" />
+        <flux:input label="{{__('Email')}}" name="contact_email" :value="old('contact_email')" />
 
         <flux:select label="{{__('Payment method')}}" name="payment_method" >
             <option value="Zelle">Zelle</option>
