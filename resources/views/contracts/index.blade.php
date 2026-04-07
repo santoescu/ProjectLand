@@ -49,7 +49,7 @@
                                             onclick='openEditModal({{$contract}})'>
 
                                         </flux:button>
-                                        <!--
+
                                         @if (in_array($userRole, ['accounting_assistant','director','admin']) )
                                             <a href="">
                                                 <flux:button
@@ -66,7 +66,7 @@
                                                 </flux:button>
                                             </a>
                                         @endif
-                                        -->
+
                                     </td>
                                 </tr>
                             @empty

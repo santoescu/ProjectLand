@@ -13,6 +13,7 @@ class Pay extends Model
         'project_id',
         'subproject',
         'contractor_id',
+        'contract_id',
         'chartAccount_id',
         'amount',
         'description',
@@ -31,6 +32,11 @@ class Pay extends Model
     public function contractor()
     {
         return $this->belongsTo(Contractor::class);
+    }
+
+    public function contract()
+    {
+        return $this->belongsTo(Contract::class);
     }
 
     public function chartAccount()

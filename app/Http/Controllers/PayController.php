@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\ChartAccount;
+use App\Models\Contract;
 use App\Models\Contractor;
 use App\Models\Pay;
 use App\Models\Project;
@@ -10,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use App\Models\User;
+use Illuminate\Validation\ValidationException;
 
 class PayController extends Controller
 {
@@ -37,9 +39,10 @@ class PayController extends Controller
     {
 
         $chartAccounts = ChartAccount::all();
+        $contracts = Contract::all();
         $projects = Project::all();
         $contractors = Contractor::all();
-        return view('pays.create', compact('chartAccounts', 'projects', 'contractors'));
+        return view('pays.create', compact('chartAccounts', 'projects', 'contractors', 'contracts'));
     }
 
     public function store(Request $request)
@@ -48,6 +51,7 @@ class PayController extends Controller
             'project_id' => 'required|string',
             'subproject' => 'nullable|string|max:255',
             'contractor_id' => 'required|string',
+            'contract_id' => 'nullable|string',
             'chartAccount_id' => 'required|string',
             'amount' => 'required|numeric|min:0',
             'description' => 'nullable|string',
@@ -55,6 +59,7 @@ class PayController extends Controller
         ]);
 
         $data = $request->all();
+        $data['contract_id'] = $this->validateContractSelection($data['contractor_id'] ?? null, $data['contract_id'] ?? null);
         $data['amount'] = (float) $data['amount'];
         $users = User::whereIn('role', ['director', 'admin'])->get();
         $data['user_id'] = $users->pluck('_id')->toArray();;
@@ -69,6 +74,7 @@ class PayController extends Controller
         ];
 
         $pay = Pay::create($data);
+        $this->syncPayContract(null, $pay->contract_id ?? null, (string) $pay->_id);
 
         try {
             foreach ($users as $user) {
@@ -102,6 +108,7 @@ class PayController extends Controller
             'project_id' => 'nullable|string',
             'subproject' => 'nullable|string|max:255',
             'contractor_id' => 'nullable|string',
+            'contract_id' => 'nullable|string',
             'chartAccount_id' => 'nullable|string',
             'amount' => 'required|numeric|min:0',
             'description' => 'nullable|string',
@@ -116,6 +123,12 @@ class PayController extends Controller
         if (empty($data['contractor_id'])) {
             $data['contractor_id'] = $pay->contractor_id;
         }
+
+        if (empty($data['contract_id'])) {
+            $data['contract_id'] = null;
+        }
+
+        $data['contract_id'] = $this->validateContractSelection($data['contractor_id'] ?? null, $data['contract_id']);
 
         if (empty($data['chartAccount_id'])) {
             $data['chartAccount_id'] = $pay->chartAccount_id;
@@ -132,7 +145,9 @@ class PayController extends Controller
 
         $existingHistories = $pay->histories ?? [];
         $data['histories'] = array_merge($existingHistories, [$newHistory]);
+        $previousContractId = $pay->contract_id ?? null;
         $pay->update($data);
+        $this->syncPayContract($previousContractId, $pay->contract_id ?? null, (string) $pay->_id);
         session()->flash('toast', [
             'type' => 'success',
             'message' => __("Updated :name", ['name' => __('Payable')]),
@@ -145,9 +160,10 @@ class PayController extends Controller
         $pay= Pay::findOrFail($id);
 
         $chartAccounts = ChartAccount::all();
+        $contracts = Contract::all();
         $projects = Project::all();
         $contractors = Contractor::all();
-        return view('pays.edit', compact('pay','chartAccounts', 'projects', 'contractors'));
+        return view('pays.edit', compact('pay','chartAccounts', 'projects', 'contractors', 'contracts'));
     }
 
     public function updateStatus($id, $status,$user_id)
@@ -211,9 +227,10 @@ class PayController extends Controller
         $user = User::findOrFail($user_id);
 
         $chartAccounts = ChartAccount::all();
+        $contracts = Contract::all();
         $projects = Project::all();
         $contractors = Contractor::all();
-        return view('pays.edit_pay_email', compact('pay','chartAccounts', 'projects', 'contractors', 'user'));
+        return view('pays.edit_pay_email', compact('pay','chartAccounts', 'projects', 'contractors', 'contracts', 'user'));
     }
     public function updateEmail(Request $request, $id, $user_id)
     {
@@ -222,6 +239,7 @@ class PayController extends Controller
             'project_id' => 'nullable|string',
             'subproject' => 'nullable|string|max:255',
             'contractor_id' => 'nullable|string',
+            'contract_id' => 'nullable|string',
             'chartAccount_id' => 'nullable|string',
             'amount' => 'required|numeric|min:0',
             'description' => 'nullable|string',
@@ -236,6 +254,12 @@ class PayController extends Controller
         if (empty($data['contractor_id'])) {
             $data['contractor_id'] = $pay->contractor_id;
         }
+
+        if (empty($data['contract_id'])) {
+            $data['contract_id'] = null;
+        }
+
+        $data['contract_id'] = $this->validateContractSelection($data['contractor_id'] ?? null, $data['contract_id']);
 
         if (empty($data['chartAccount_id'])) {
             $data['chartAccount_id'] = $pay->chartAccount_id;
@@ -253,7 +277,9 @@ class PayController extends Controller
 
         $existingHistories = $pay->histories ?? [];
         $data['histories'] = array_merge($existingHistories, [$newHistory]);
+        $previousContractId = $pay->contract_id ?? null;
         $pay->update($data);
+        $this->syncPayContract($previousContractId, $pay->contract_id ?? null, (string) $pay->_id);
         session()->flash('toast', [
             'type' => 'success',
             'message' => __("Updated :name", ['name' => __('Payable')]),
@@ -264,8 +290,9 @@ class PayController extends Controller
     }
     public function destroy(string $id)
     {
-        $chartAccount = Pay::findOrFail($id);
-        $chartAccount->delete();
+        $pay = Pay::findOrFail($id);
+        $this->syncPayContract($pay->contract_id ?? null, null, (string) $pay->_id);
+        $pay->delete();
 
         session()->flash('toast', [
             'type' => 'success',
@@ -273,6 +300,52 @@ class PayController extends Controller
         ]);
 
         return redirect()->route('pays.index');
+    }
+
+    private function syncPayContract(?string $previousContractId, ?string $newContractId, string $payId): void
+    {
+        if ($previousContractId && $previousContractId !== $newContractId) {
+            $previousContract = Contract::find($previousContractId);
+
+            if ($previousContract) {
+                $payIds = array_values(array_filter(
+                    $previousContract->pay_ids ?? [],
+                    fn ($existingPayId) => (string) $existingPayId !== $payId
+                ));
+
+                $previousContract->update(['pay_ids' => $payIds]);
+            }
+        }
+
+        if ($newContractId) {
+            $newContract = Contract::find($newContractId);
+
+            if ($newContract) {
+                $payIds = array_map('strval', $newContract->pay_ids ?? []);
+
+                if (!in_array($payId, $payIds, true)) {
+                    $payIds[] = $payId;
+                    $newContract->update(['pay_ids' => $payIds]);
+                }
+            }
+        }
+    }
+
+    private function validateContractSelection(?string $contractorId, ?string $contractId): ?string
+    {
+        if (!$contractId) {
+            return null;
+        }
+
+        $contract = Contract::find($contractId);
+
+        if (!$contract || (string) $contract->contractor_id !== (string) $contractorId) {
+            throw ValidationException::withMessages([
+                'contract_id' => __('The selected contract does not belong to the selected vendor.'),
+            ]);
+        }
+
+        return (string) $contract->_id;
     }
 
 

@@ -378,4 +378,6 @@
     "contracts": "contratos",
     "Compensation": "Compensación",
     "The payment request will be created after confirmation.": "La solicitud de pago se creará después de la confirmación."
+    ,
+    "The selected contract does not belong to the selected vendor.": "El contrato seleccionado no pertenece al proveedor seleccionado."
 }

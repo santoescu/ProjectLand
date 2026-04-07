@@ -22,6 +22,20 @@
 
 
         .subproject-field .sp-select{ order: 4; }
+
+        .contract-field{
+            display:flex;
+            flex-direction:column;
+            gap:.5rem;
+        }
+
+        .contract-field .contract-label{ order: 1; }
+
+        .contract-field .hs-select{ order: 2; }
+
+        .contract-field .hs-dropdown{ order: 3; }
+
+        .contract-field .contract-select{ order: 4; }
     </style>
     @php
         $userRole = $user->role ?? null;
@@ -38,6 +52,13 @@
                     'id' => (string) $p->_id,
                     'name' => $p->name,
                     'subprojects' => is_array($p->subprojects ?? null) ? $p->subprojects : [],
+                ];
+            })->values();
+            $contractsForFront = $contracts->map(function ($contract) {
+                return [
+                    'id' => (string) $contract->_id,
+                    'name' => $contract->name,
+                    'contractor_id' => (string) $contract->contractor_id,
                 ];
             })->values();
         @endphp
@@ -134,11 +155,17 @@
             </div>
 
         </div>
-        <div data-flux-field class="relative {{ $errors->has('contractor_id') ? 'error' : '' }}">
-            <label for="contractor_id"  class="block text-base text-gray-700 dark:text-neutral-200">
-                {{ __('Vendor') }}
-            </label>
-            <select data-hs-select='{
+        <div x-data="contractSelect({
+                contracts: @js($contractsForFront),
+                initialContractorId: @js(old('contractor_id', (string) $pay->contractor_id)),
+                initialContractId: @js(old('contract_id', (string) ($pay->contract_id ?? '')))
+              })"
+             x-init="init()">
+            <div data-flux-field class="relative {{ $errors->has('contractor_id') ? 'error' : '' }}">
+                <label for="contractor_id"  class="block text-base text-gray-700 dark:text-neutral-200">
+                    {{ __('Vendor') }}
+                </label>
+                <select data-hs-select='{
                       "hasSearch": true,
                       "optionAllowEmptyOption": true,
                       "minSearchLength": 3,
@@ -155,18 +182,53 @@
                         "<div class=\"hidden hs-error:block absolute top-1/2 end-8 -translate-y-1/2\"><svg class=\"shrink-0 size-4 text-red-500\" xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"10\"/><line x1=\"12\" x2=\"12\" y1=\"8\" y2=\"12\"/><line x1=\"12\" x2=\"12.01\" y1=\"16\" y2=\"16\"/></svg></div>",
                         "<div class=\"absolute top-1/2 end-3 -translate-y-1/2\"><svg class=\"shrink-0 size-3.5 text-gray-500 dark:text-neutral-500 \" xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"m7 15 5 5 5-5\"/><path d=\"m7 9 5-5 5 5\"/></svg></div>"
                         ]
-                      }' id="contractor_id" name="contractor_id"  {{ in_array($pay->status, [1, 2, 3]) ? 'disabled' : '' }}>
-                <option value=""></option>
-                @foreach($contractors as $contractor)
-                    <option value="{{ $contractor->_id }}" {{ old('contractor_id', $pay->contractor_id) == $contractor->_id ? 'selected' : '' }}>
-                        {{ $contractor->company_name }} - {{ $contractor->contact_name }}
-                    </option>
-                @endforeach
+                      }' id="contractor_id" name="contractor_id" @change="onContractorChange($event.target.value)"  {{ in_array($pay->status, [1, 2, 3]) ? 'disabled' : '' }}>
+                    <option value=""></option>
+                    @foreach($contractors as $contractor)
+                        <option value="{{ $contractor->_id }}" {{ old('contractor_id', $pay->contractor_id) == $contractor->_id ? 'selected' : '' }}>
+                            {{ $contractor->company_name }} - {{ $contractor->contact_name }}
+                        </option>
+                    @endforeach
 
-            </select>
-            @error('contractor_id')
-            <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
-            @enderror
+                </select>
+                @error('contractor_id')
+                <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                @enderror
+            </div>
+            <div x-show="showContract" x-cloak data-flux-field class="mt-4 relative {{ $errors->has('contract_id') ? 'error' : '' }} contract-field" wire:ignore>
+                <label for="contract_id" class="block text-base text-gray-700 dark:text-neutral-200 mb-2 contract-label">
+                    {{ __('Contract') }}
+                </label>
+                <div id="contract_toggle" class="w-full contract-toggle"></div>
+                <select
+                    id="contract_id"
+                    name="contract_id"
+                    class="hidden"
+                    data-hs-select='{
+                  "hasSearch": true,
+                  "optionAllowEmptyOption": true,
+                  "minSearchLength": 3,
+                  "searchPlaceholder": "{{__('Search')}}",
+                  "searchClasses": "block w-full sm:text-sm border-gray-200 rounded-lg focus:border-blue-500 focus:ring-blue-500 before:absolute before:inset-0 before:z-1 dark:bg-neutral-700 dark:border-neutral-700 dark:text-neutral-400 dark:placeholder-neutral-500 py-1.5 sm:py-2 px-3",
+                  "searchWrapperClasses": "bg-white p-2 -mx-1 sticky top-0 dark:bg-neutral-700",
+                  "placeholder": "{{__('Select')}}",
+                  "toggleTag": "<button type=\"button\" aria-expanded=\"false\" data-hs-select-toggle=\"#contract_toggle\"><span class=\"me-2\" data-icon></span><span class=\"text-gray-800 dark:text-neutral-200 \" data-title></span></button>",
+                  "toggleClasses": "hs-select-disabled:pointer-events-none hs-select-disabled:opacity-50 relative py-3 ps-4 pe-9 flex gap-x-2 text-nowrap w-full cursor-pointer bg-white border border-gray-200 rounded-lg text-start text-sm focus:outline-hidden focus:ring-2 focus:ring-blue-500 dark:bg-neutral-700 dark:border-neutral-700 dark:text-neutral-400 dark:focus:outline-hidden dark:focus:ring-1 dark:focus:ring-neutral-600",
+                  "dropdownClasses": "mt-2 max-h-72 pb-1 px-1 space-y-0.5 z-20 w-full bg-white border border-gray-200 rounded-lg overflow-hidden overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-gray-100 [&::-webkit-scrollbar-thumb]:bg-gray-300 dark:[&::-webkit-scrollbar-track]:bg-neutral-700 dark:[&::-webkit-scrollbar-thumb]:bg-neutral-500 dark:bg-neutral-700 dark:border-neutral-700",
+                  "optionClasses": "py-2 px-4 w-full text-sm text-gray-800 cursor-pointer hover:bg-gray-100 rounded-lg focus:outline-hidden focus:bg-gray-100 dark:bg-neutral-700 dark:hover:bg-neutral-800 dark:text-neutral-200 dark:focus:bg-neutral-800",
+                  "optionTemplate": "<div class=\"flex justify-between items-center w-full\"><span data-title></span><span class=\"hidden hs-selected:block\"><svg class=\"shrink-0 size-3.5 text-black dark:text-white\" xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><polyline points=\"20 6 9 17 4 12\"/></svg></span></div>",
+                  "extraMarkup": [
+                    "<div class=\"hidden hs-error:block absolute top-1/2 end-8 -translate-y-1/2\"><svg class=\"shrink-0 size-4 text-red-500\" xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"10\"/><line x1=\"12\" x2=\"12\" y1=\"8\" y2=\"12\"/><line x1=\"12\" x2=\"12.01\" y1=\"16\" y2=\"16\"/></svg></div>",
+                    "<div class=\"absolute top-1/2 end-3 -translate-y-1/2\"><svg class=\"shrink-0 size-3.5 text-gray-500 dark:text-neutral-500 \" xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"m7 15 5 5 5-5\"/><path d=\"m7 9 5-5 5 5\"/></svg></div>"
+                  ]
+                    }'
+                    {{ in_array($pay->status, [1, 2, 3]) ? 'disabled' : '' }}>
+                    <option value=""></option>
+                </select>
+                @error('contract_id')
+                <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                @enderror
+            </div>
         </div>
         <div data-flux-field class="relative {{ $errors->has('chartAccount_id') ? 'error' : '' }}">
             <label for="chartAccount_id"  class="block text-base text-gray-700 dark:text-neutral-200">
@@ -292,6 +354,104 @@
 
     <script>
         document.addEventListener('alpine:init', () => {
+            Alpine.data('contractSelect', ({ contracts, initialContractorId, initialContractId }) => ({
+                contracts,
+                showContract: false,
+
+                init() {
+                    if (initialContractorId) {
+                        this.onContractorChange(initialContractorId, initialContractId);
+                    }
+                },
+
+                onContractorChange(contractorId, contractToSelect = null) {
+                    const filteredContracts = this.contracts.filter(contract => contract.contractor_id === contractorId);
+                    this.showContract = filteredContracts.length > 0;
+
+                    this.$nextTick(() => {
+                        if (!this.showContract) {
+                            this.clearContract();
+                            return;
+                        }
+
+                        this.fillContractOptions(filteredContracts);
+                        this.setNativeValue('#contract_id', contractToSelect ?? '');
+                        this.reInitHSSelect('#contract_id');
+
+                        this.$nextTick(() => {
+                            this.setNativeValue('#contract_id', contractToSelect ?? '');
+                            this.setHSSelectValue('#contract_id', contractToSelect ?? '');
+                        });
+                    });
+                },
+
+                fillContractOptions(contracts) {
+                    const el = document.querySelector('#contract_id');
+                    if (!el) return;
+
+                    el.innerHTML = '<option value=""></option>' + contracts
+                        .map(contract => `<option value="${this.escapeHtml(contract.id)}">${this.escapeHtml(contract.name)}</option>`)
+                        .join('');
+                },
+
+                clearContract() {
+                    const el = document.querySelector('#contract_id');
+                    if (el) el.value = '';
+                    this.setNativeValue('#contract_id', '');
+                    this.setHSSelectValue('#contract_id', '');
+                },
+
+                setNativeValue(selector, value) {
+                    const el = document.querySelector(selector);
+                    if (!el) return;
+
+                    el.value = value ?? '';
+                    el.dispatchEvent(new Event('change', { bubbles: true }));
+                },
+
+                reInitHSSelect(selector) {
+                    if (!window.HSSelect) return;
+
+                    const el = document.querySelector(selector);
+                    if (!el) return;
+
+                    const inst = window.HSSelect.getInstance(el);
+                    if (inst && typeof inst.destroy === 'function') inst.destroy();
+
+                    const toggleHolder = document.querySelector('#contract_toggle');
+                    if (toggleHolder) toggleHolder.innerHTML = '';
+
+                    new window.HSSelect(el);
+                },
+
+                setHSSelectValue(selector, value) {
+                    const el = document.querySelector(selector);
+                    if (!el) return;
+
+                    if (!window.HSSelect) {
+                        el.value = value;
+                        return;
+                    }
+
+                    const inst = window.HSSelect.getInstance(el);
+                    if (inst && typeof inst.setValue === 'function') {
+                        inst.setValue(value);
+                    } else {
+                        el.value = value;
+                        el.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+                },
+
+                escapeHtml(str) {
+                    return String(str)
+                        .replaceAll('&', '&amp;')
+                        .replaceAll('<', '&lt;')
+                        .replaceAll('>', '&gt;')
+                        .replaceAll('"', '&quot;')
+                        .replaceAll("'", '&#039;');
+                }
+            }));
+
             const input = document.getElementById('amount');
 
             input.addEventListener('input', function() {
@@ -323,6 +483,7 @@
                 input.value = input.value.replace(/[$,]/g, '');
             });
         });
+
     </script>
     <script>
 
