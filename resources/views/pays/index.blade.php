@@ -121,6 +121,16 @@
                                                 </flux:button>
                                             </a>
                                         @endif
+
+                                        @if (!empty($pay->attachment_link))
+                                            <a href="{{ $pay->attachment_link }}" target="_blank" rel="noopener noreferrer">
+                                                <flux:button
+                                                    size="sm"
+                                                    variant="primary"
+                                                    icon="paper-clip">
+                                                </flux:button>
+                                            </a>
+                                        @endif
                                         @if (in_array($userRole, ['accounting_assistant','director','admin']) && in_array($pay->status, [ 0,]))
 
                                             <flux:modal.trigger name="confirm-delete-pay">
@@ -441,4 +451,3 @@
     @endpush
 
 </x-layouts.app>
-

@@ -197,6 +197,10 @@
 
         <flux:input label="{{__('Amount')}}"  id="amount" name="amount" :value="old('amount', $pay->amount)" />
         <flux:input label="{{__('Notes')}}" id="description" name="description" :value="old('description', $pay->description)"  />
+        <flux:input label="{{__('Attachment Link')}}" id="attachment_link" name="attachment_link" :value="old('attachment_link', $pay->attachment_link)" />
+        @error('attachment_link')
+        <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+        @enderror
 
 
 

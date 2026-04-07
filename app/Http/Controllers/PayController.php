@@ -51,6 +51,7 @@ class PayController extends Controller
             'chartAccount_id' => 'required|string',
             'amount' => 'required|numeric|min:0',
             'description' => 'nullable|string',
+            'attachment_link' => 'nullable|url',
         ]);
 
         $data = $request->all();
@@ -104,6 +105,7 @@ class PayController extends Controller
             'chartAccount_id' => 'nullable|string',
             'amount' => 'required|numeric|min:0',
             'description' => 'nullable|string',
+            'attachment_link' => 'nullable|url',
         ]);
 
         $data = $request->all();
@@ -223,6 +225,7 @@ class PayController extends Controller
             'chartAccount_id' => 'nullable|string',
             'amount' => 'required|numeric|min:0',
             'description' => 'nullable|string',
+            'attachment_link' => 'nullable|url',
         ]);
 
         $data = $request->all();

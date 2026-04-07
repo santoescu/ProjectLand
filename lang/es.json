@@ -40,6 +40,7 @@
     "Continue": "Continuar",
     "Create": "Crear",
     "Create :name": "Crear :name",
+    "Create :name?": "¿Crear :name?",
     "Created :name": ":name Creado",
     "Created": "",
     "Delete": "Eliminar",
@@ -198,6 +199,7 @@
     "Tags": "Etiquetas",
     "Temporary Redirect": "Redirección temporal",
     "The given data was invalid.": "Los datos proporcionados no son válidos.",
+    "Do you want to confirm the creation of this :name?": "¿Deseas confirmar la creación de este :name?",
     "The response is not a streamed response.": "La respuesta no es una respuesta transmitida.",
     "The response is not a view.": "La respuesta no es una vista.",
     "This action is unauthorized.": "Esta acción no está autorizada.",
@@ -358,6 +360,8 @@
     "All": "Todos",
     "Status-All": "Estado-Todos",
     "Project-All": "Proyecto-Todos",
+    "Attachment Link": "Link de anexo",
+    "Open Attachment": "Abrir anexo",
     "budget code": "cuenta contable",
     "budget codes": "cuentas contables",
     "Budget Code": "Cuenta Contable",
@@ -372,5 +376,6 @@
     "Contracts": "Contratos",
     "contract": "contrato",
     "contracts": "contratos",
-    "Compensation": "Compensación"
+    "Compensation": "Compensación",
+    "The payment request will be created after confirmation.": "La solicitud de pago se creará después de la confirmación."
 }

@@ -16,6 +16,7 @@ class Pay extends Model
         'chartAccount_id',
         'amount',
         'description',
+        'attachment_link',
         'status',
         'user_id',
         'histories'
