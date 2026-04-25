@@ -29,9 +29,6 @@
             "App\\": "app/"
         }
     },
-    "autoload-dev": {
-        "psr-4": []
-    },
     "scripts": {
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
