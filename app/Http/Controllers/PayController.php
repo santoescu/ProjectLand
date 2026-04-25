@@ -17,20 +17,23 @@ class PayController extends Controller
 {
     public function index(Request $request)
     {
+        $selectedProject = session('selected_project');
+        $effectiveProjectId = data_get($selectedProject, 'id') ?: $request->project_id;
+
         $query = Pay::with('project', 'contractor', 'chartAccount');
 
         if (!is_null($request->status) && $request->status !== '') {
             $query->where('status', (int) $request->status);
         }
-        if (!is_null($request->project_id) && $request->project_id !== '') {
-            $query->where('project_id', $request->project_id);
+        if (!is_null($effectiveProjectId) && $effectiveProjectId !== '') {
+            $query->where('project_id', $effectiveProjectId);
         }
 
 
         $pays = $query->orderBy('created_at', 'desc')->paginate(10);
         $projects = Project::all();
 
-        return view('pays.index', compact('projects','pays'));
+        return view('pays.index', compact('projects', 'pays', 'selectedProject', 'effectiveProjectId'));
     }
     /**
      * Mostrar formulario de creación.

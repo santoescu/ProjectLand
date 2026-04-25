@@ -19,7 +19,7 @@
                         </a>
                     </div>
                     <div class="overflow-hidden">
-                        <table class="min-w-full divide-y divide-gray-200 dark:divide-neutral-700"  id="usersTable">
+                        <table class="min-w-full table-fixed divide-y divide-gray-200 dark:divide-neutral-700"  id="usersTable">
                             <thead class="bg-gray-50 dark:bg-neutral-700">
                             <tr>
 
@@ -32,9 +32,9 @@
                             <tbody class="divide-y divide-gray-200 dark:divide-neutral-700">
                             @forelse ($users as $user)
                                 <tr >
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800 dark:text-neutral-200">{{ $user->name }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800 dark:text-neutral-200">{{ $user->email }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800 dark:text-neutral-200">{{ $user->role }}</td>
+                                    <td class="px-4 py-4 text-sm font-medium text-gray-800 break-words dark:text-neutral-200">{{ $user->name }}</td>
+                                    <td class="px-4 py-4 text-sm font-medium text-gray-800 break-words dark:text-neutral-200">{{ $user->email }}</td>
+                                    <td class="px-4 py-4 text-sm font-medium text-gray-800 break-words dark:text-neutral-200">{{ $user->role }}</td>
                                     <td class="px-6 py-4 flex justify-center gap-2">
                                         <!-- Botón Editar -->
 
@@ -229,4 +229,3 @@
     @endpush
 
 </x-layouts.app>
-

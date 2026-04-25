@@ -269,7 +269,7 @@
 <!-- End Sidebar -->
 
 <!-- Main content wrapper (deja espacio para el sidebar en desktop) -->
-<div class="lg:ps-64">
+<div class="transition-all duration-300 lg:ps-64 hs-overlay-minified:lg:ps-13">
     {{ $slot }}
 </div>
 

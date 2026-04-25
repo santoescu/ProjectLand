@@ -23,7 +23,7 @@
                         </a>
                     </div>
                     <div class="overflow-hidden">
-                        <table class="min-w-full divide-y divide-gray-200 dark:divide-neutral-700"  id="contractorsTable">
+                        <table class="min-w-full table-fixed divide-y divide-gray-200 dark:divide-neutral-700"  id="contractorsTable">
                             <thead class="bg-gray-50 dark:bg-neutral-700">
                             <tr>
 
@@ -38,11 +38,11 @@
                             <tbody class="divide-y divide-gray-200 dark:divide-neutral-700">
                             @forelse ($contractors as $contractor)
                                 <tr >
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800 dark:text-neutral-200">{{ $contractor->company_name }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800 dark:text-neutral-200">{{ $contractor->contact_name }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800 dark:text-neutral-200">{{ $contractor->contact_phone }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800 dark:text-neutral-200">{{ $contractor->contact_email }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800 dark:text-neutral-200">{{ $contractor->payment_method }}</td>
+                                    <td class="px-4 py-4 text-sm font-medium text-gray-800 break-words dark:text-neutral-200">{{ $contractor->company_name }}</td>
+                                    <td class="px-4 py-4 text-sm font-medium text-gray-800 break-words dark:text-neutral-200">{{ $contractor->contact_name }}</td>
+                                    <td class="px-4 py-4 text-sm font-medium text-gray-800 break-words dark:text-neutral-200">{{ $contractor->contact_phone }}</td>
+                                    <td class="px-4 py-4 text-sm font-medium text-gray-800 break-words dark:text-neutral-200">{{ $contractor->contact_email }}</td>
+                                    <td class="px-4 py-4 text-sm font-medium text-gray-800 break-words dark:text-neutral-200">{{ $contractor->payment_method }}</td>
                                     <td class="px-6 py-4 flex justify-center gap-2">
 
 
@@ -257,4 +257,3 @@
     @endpush
 
 </x-layouts.app>
-

@@ -20,21 +20,22 @@
 
                         <div class="flex items-center gap-5">
 
+                            @if (!filled(data_get($selectedProject ?? null, 'id')))
+                                <form method="GET" action="{{ route('pays.index') }}">
+                                    <input type="hidden" name="status" value="{{ request('status') }}">
 
+                                    <flux:select name="project_id" onchange="this.form.submit()" class="border rounded px-2 py-1">
+                                        <option value="">{{ __("Project-All") }}</option>
+                                        @foreach($projects as $project)
+                                            <option value="{{ $project->id }}" {{ (string) request('project_id') === (string) $project->id ? 'selected' : '' }}>
+                                                {{ $project->name }}
+                                            </option>
+                                        @endforeach
+                                    </flux:select>
+                                </form>
+                            @endif
                             <form method="GET" action="{{ route('pays.index') }}">
-                                <input type="hidden" name="status" value="{{ request('status') }}">
-
-                                <flux:select name="project_id" onchange="this.form.submit()" class="border rounded px-2 py-1">
-                                    <option value="">{{ __("Project-All") }}</option>
-                                    @foreach($projects as $project)
-                                        <option value="{{ $project->id }}" {{ request('project_id') == $project->id ? 'selected' : '' }}>
-                                            {{ $project->name }}
-                                        </option>
-                                    @endforeach
-                                </flux:select>
-                            </form>
-                            <form method="GET" action="{{ route('pays.index') }}">
-                                <input type="hidden" name="project_id" value="{{ request('project_id') }}">
+                                <input type="hidden" name="project_id" value="{{ $effectiveProjectId }}">
 
                                 <flux:select name="status" onchange="this.form.submit()" class="border rounded px-2 py-1">
                                     <option value="">{{ __("Status-All") }}</option>
@@ -51,7 +52,7 @@
                         </div>
                     </div>
                     <div class="overflow-hidden">
-                        <table class="min-w-full divide-y divide-gray-200 dark:divide-neutral-700"  id="projectsTable">
+                        <table class="min-w-full table-fixed divide-y divide-gray-200 dark:divide-neutral-700"  id="projectsTable">
                             <thead class="bg-gray-50 dark:bg-neutral-700">
                             <tr>
                                 <th scope="col" class="px-6 py-3 text-start text-xs font-medium text-gray-500 uppercase dark:text-neutral-500">{{__('Date')}}</th>
@@ -68,15 +69,16 @@
                             <tbody class="divide-y divide-gray-200 dark:divide-neutral-700">
                             @forelse($pays as $pay)
                                 <tr >
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800 dark:text-neutral-200">{{ $pay->created_at }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800 dark:text-neutral-200">{{ $pay->project->name }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800 dark:text-neutral-200">{{ $pay->subproject }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800 dark:text-neutral-200">{{ $pay->contractor->company_name }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800 dark:text-neutral-200">{{ $pay->chartAccount->name }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800 dark:text-neutral-200">{{ $pay->description }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800 dark:text-neutral-200">{{ $pay->amount_formatted}}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800 dark:text-neutral-200"><flux:badge  :color="$pay->status_color" inset="top bottom">{{ $pay->status_label }}</flux:badge></td>
-                                    <td class="px-6 py-4 flex justify-center gap-2">
+                                    <td class="px-4 py-4 text-sm font-medium text-gray-800 dark:text-neutral-200">{{ $pay->created_at }}</td>
+                                    <td class="px-4 py-4 text-sm font-medium text-gray-800 break-words dark:text-neutral-200">{{ $pay->project->name }}</td>
+                                    <td class="px-4 py-4 text-sm font-medium text-gray-800 break-words dark:text-neutral-200">{{ $pay->subproject }}</td>
+                                    <td class="px-4 py-4 text-sm font-medium text-gray-800 break-words dark:text-neutral-200">{{ $pay->contractor->company_name }}</td>
+                                    <td class="px-4 py-4 text-sm font-medium text-gray-800 break-words dark:text-neutral-200">{{ $pay->chartAccount->name }}</td>
+                                    <td class="px-4 py-4 text-sm font-medium text-gray-800 break-words dark:text-neutral-200">{{ $pay->description }}</td>
+                                    <td class="px-4 py-4 text-sm font-medium text-gray-800 dark:text-neutral-200">{{ $pay->amount_formatted}}</td>
+                                    <td class="px-4 py-4 text-sm font-medium text-gray-800 dark:text-neutral-200"><flux:badge  :color="$pay->status_color" inset="top bottom">{{ $pay->status_label }}</flux:badge></td>
+                                    <td class="px-4 py-4">
+                                        <div class="flex flex-wrap justify-center gap-2">
                                         @if (!in_array($pay->status, [ 1,2]))
                                             <a href="{{ route('pays.edit', $pay->_id) }}">
                                                 <flux:button
@@ -143,6 +145,7 @@
                                                 </flux:button>
                                             </flux:modal.trigger>
                                         @endif
+                                        </div>
                                     </td>
                                 </tr>
                             @empty

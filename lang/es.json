@@ -379,5 +379,12 @@
     "Compensation": "Compensación",
     "The payment request will be created after confirmation.": "La solicitud de pago se creará después de la confirmación."
     ,
-    "The selected contract does not belong to the selected vendor.": "El contrato seleccionado no pertenece al proveedor seleccionado."
+    "The selected contract does not belong to the selected vendor.": "El contrato seleccionado no pertenece al proveedor seleccionado.",
+    "Registered projects overview": "Resumen de proyectos registrados",
+    "Browse the registered projects available in the platform.": "Explora los proyectos registrados disponibles en la plataforma.",
+    "There are no registered projects yet.": "Todavía no hay proyectos registrados.",
+    "When you create a project, it will appear here with its assigned SVG or the default image.": "Cuando crees un proyecto, aparecerá¡ aquá con su SVG asignado o la imagen predeterminada.",
+    "This project has no subprojects registered.": "Este proyecto no tiene subproyectos registrados.",
+    ":count project|:count projects": ":count proyecto|:count proyectos",
+    ":count subproject|:count subprojects": ":count subproyecto|:count subproyectos"
 }

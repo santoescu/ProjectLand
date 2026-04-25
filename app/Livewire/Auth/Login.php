@@ -43,7 +43,7 @@ class Login extends Component
         RateLimiter::clear($this->throttleKey());
         Session::regenerate();
 
-        $this->redirectIntended(default: route('pays.index'));
+        $this->redirect(route('dashboard', absolute: false), navigate: true);
 
     }
 
