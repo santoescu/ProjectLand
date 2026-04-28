@@ -3,8 +3,10 @@
 namespace App\Livewire\Settings;
 
 use Illuminate\Support\Facades\Auth;
+use Livewire\Attributes\Layout;
 use Livewire\Component;
 
+#[Layout('components.layouts.app')]
 class Language extends Component
 {
     public string $locale;
