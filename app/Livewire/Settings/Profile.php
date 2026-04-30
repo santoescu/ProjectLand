@@ -6,7 +6,10 @@ use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Validation\Rule;
+use Livewire\Attributes\Layout;
 use Livewire\Component;
+
+#[Layout('components.layouts.app')]
 
 class Profile extends Component
 {
@@ -46,7 +49,7 @@ class Profile extends Component
                 'max:255',
                 Rule::unique(User::class)->ignore($user->id),
             ],
-            'role' => 'required|string|in:accounting_assistant,project_manager,director,admin'
+            'role' => 'required|string|in:admin,manager,viewer'
         ]);
 
         $user->fill($validated);
@@ -69,7 +72,7 @@ class Profile extends Component
         $user = Auth::user();
 
         if ($user->hasVerifiedEmail()) {
-            $this->redirectIntended(default: route('pays.index', absolute: false));
+            $this->redirectIntended(default: route('inventories.index', absolute: false));
 
             return;
         }

@@ -28,10 +28,9 @@
             </div>
 
             <flux:select wire:model="role" label="{{__('Role')}}" name="role"  autocomplete="role" disabled>
-                <option value="accounting_assistant">{{ __('Accounting Assistant') }}</option>
-                <option value="project_manager">{{ __('Project Manager') }}</option>
-                <option value="director">{{ __('Director') }}</option>
                 <option value="admin">{{ __('Admin') }}</option>
+                <option value="manager">{{ __('Manager') }}</option>
+                <option value="viewer">{{ __('Viewer') }}</option>
             </flux:select>
 
             <div class="flex items-center gap-4">

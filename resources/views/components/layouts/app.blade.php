@@ -1,4 +1,4 @@
-<x-layouts.app.sidebar :title="$title ?? null">
+<x-layouts.app.header :title="$title ?? null">
     <flux:main>
         {{ $slot }}
     </flux:main>
@@ -13,4 +13,4 @@
     <script src="https://unpkg.com/preline/dist/preline.js"></script>
 
     @stack('scripts')
-</x-layouts.app.sidebar>
+</x-layouts.app.header>

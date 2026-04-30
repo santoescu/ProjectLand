@@ -34,7 +34,7 @@
                                 <tr >
                                     <td class="px-4 py-4 text-sm font-medium text-gray-800 break-words dark:text-neutral-200">{{ $user->name }}</td>
                                     <td class="px-4 py-4 text-sm font-medium text-gray-800 break-words dark:text-neutral-200">{{ $user->email }}</td>
-                                    <td class="px-4 py-4 text-sm font-medium text-gray-800 break-words dark:text-neutral-200">{{ $user->role }}</td>
+                                    <td class="px-4 py-4 text-sm font-medium text-gray-800 break-words dark:text-neutral-200">{{ __(ucfirst($user->role)) }}</td>
                                     <td class="px-6 py-4 flex justify-center gap-2">
                                         <!-- Botón Editar -->
 
@@ -96,10 +96,9 @@
                 <flux:input id="email" label="{{__('Email')}}" name="email"  />
 
                 <flux:select id="role" label="{{__('Role')}}" name="role" >
-                    <option value="accounting_assistant">{{ __('Accounting Assistant') }}</option>
-                    <option value="project_manager">{{ __('Project Manager') }}</option>
-                    <option value="director">{{ __('Director') }}</option>
                     <option value="admin">{{ __('Admin') }}</option>
+                    <option value="manager">{{ __('Manager') }}</option>
+                    <option value="viewer">{{ __('Viewer') }}</option>
                 </flux:select>
 
                 <div id="formErrors" class="text-red-500 text-sm"></div>

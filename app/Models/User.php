@@ -24,6 +24,24 @@ class User extends Eloquent implements AuthenticatableContract, CanResetPassword
     protected $fillable = ['name', 'email', 'password', 'locale','role', 'appearance',];
     protected $hidden = ['password', 'remember_token'];
 
+    public function getRoleAttribute($value): ?string
+    {
+        return match ($value) {
+            'director' => 'admin',
+            'accounting_assistant' => 'manager',
+            default => $value,
+        };
+    }
+
+    public function setRoleAttribute($value): void
+    {
+        $this->attributes['role'] = match ($value) {
+            'director' => 'admin',
+            'accounting_assistant' => 'manager',
+            default => $value,
+        };
+    }
+
 
 
 

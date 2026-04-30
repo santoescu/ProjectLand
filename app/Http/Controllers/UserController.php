@@ -40,7 +40,7 @@ class UserController extends Controller
                 'max:255',
                 Rule::unique(User::class),
             ],
-            'role' => 'required|string|in:accounting_assistant,project_manager,director,admin'
+            'role' => 'required|string|in:admin,manager,viewer'
         ]);
 
         $temporaryPassword = Str::password(12);
@@ -81,7 +81,7 @@ class UserController extends Controller
                 'max:255',
                 Rule::unique(User::class)->ignore($id),
             ],
-            'role' => 'required|string|in:accounting_assistant,project_manager,director,admin'
+            'role' => 'required|string|in:admin,manager,viewer'
         ]);
 
         $user = User::findOrFail($id);

@@ -11,10 +11,9 @@
         <flux:input label="{{__('Name')}}" name="name" :value="old('name')" />
         <flux:input label="{{__('Email')}}" name="email" :value="old('email')" />
         <flux:select label="{{__('Role')}}" name="role" >
-            <option value="accounting_assistant">{{ __('Accounting Assistant') }}</option>
-            <option value="project_manager">{{ __('Project Manager') }}</option>
-            <option value="director">{{ __('Director') }}</option>
             <option value="admin">{{ __('Admin') }}</option>
+            <option value="manager">{{ __('Manager') }}</option>
+            <option value="viewer">{{ __('Viewer') }}</option>
         </flux:select>
 
 

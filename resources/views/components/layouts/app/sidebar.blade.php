@@ -1,46 +1,18 @@
 @php
     $userRole = Auth::user()->role;
+    $userId = Auth::id();
     $user = auth()->user();
 
     $groups = [
         [
-            'name' => __('Payables'),
-            'icon' => 'currency-dollar',
-            'url' => route('pays.index'),
-            'current' => request()->routeIs('pays.index'),
+            'name' => __('Inventory'),
+            'icon' => 'archive-box',
+            'url' => route('inventories.index'),
+            'current' => request()->routeIs('inventories.*'),
         ],
     ];
 
-    if (in_array($userRole, ['accounting_assistant', 'director', 'admin'])) {
-        $groups[] = [
-            'name' => __('Vendors'),
-            'icon' => 'clipboard-document-list',
-            'url' => route('contractors.index'),
-            'current' => request()->routeIs('contractors.index'),
-        ];
-        $groups[] = [
-            'name' => __('Contracts'),
-            'icon' => 'clipboard-document-check',
-            'url' => route('contracts.index'),
-            'current' => request()->routeIs('contracts.index'),
-        ];
-
-        $groups[] = [
-            'name' => __('Projects'),
-            'icon' => 'home-modern',
-            'url' => route('projects.index'),
-            'current' => request()->routeIs('projects.index'),
-        ];
-
-        $groups[] = [
-            'name' => __('Budget Codes'),
-            'icon' => 'presentation-chart-line',
-            'url' => route('chartAccounts.index'),
-            'current' => request()->routeIs('chartAccounts.index'),
-        ];
-    }
-
-    if ($userRole === 'admin') {
+    if (in_array($userRole, ['admin'], true)) {
         $groups[] = [
             'name' => __('Users'),
             'icon' => 'user',
