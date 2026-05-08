@@ -44,6 +44,8 @@
 
         @php
             // Mapa liviano para el front (id, name, subprojects)
+            $lockedProjectId = (string) ($effectiveProjectId ?? '');
+            $selectedProjectId = $lockedProjectId ?: old('project_id');
             $projectsForFront = $projects->map(function ($p) {
                 return [
                     'id' => (string) $p->_id,
@@ -52,18 +54,12 @@
                 ];
             })->values();
 
-            $contractsForFront = $contracts->map(function ($contract) {
-                return [
-                    'id' => (string) $contract->_id,
-                    'name' => $contract->name,
-                    'contractor_id' => (string) $contract->contractor_id,
-                ];
-            })->values();
+            $oldAllocations = old('payment_allocations', []);
         @endphp
 
         <div x-data="subprojectSelect({
                 projects: @js($projectsForFront),
-                oldProjectId: @js(old('project_id')),
+                oldProjectId: @js($selectedProjectId),
                 oldSubproject: @js(old('subproject'))
                 })"
              x-init="init()">
@@ -73,6 +69,9 @@
                     {{ __('Project') }}
                 </label>
 
+                @if($lockedProjectId)
+                    <input type="hidden" name="project_id" value="{{ $lockedProjectId }}">
+                @endif
                 <select
                     data-hs-select='{
                       "hasSearch": true,
@@ -93,12 +92,13 @@
                       ]
                     }'
                     id="project_id"
-                    name="project_id"
+                    name="{{ $lockedProjectId ? '' : 'project_id' }}"
                     class="hidden"
-                    @change="onProjectChange($event.target.value)">
+                    @change="onProjectChange($event.target.value)"
+                    {{ $lockedProjectId ? 'disabled' : '' }}>
                     <option value=""></option>
                     @foreach($projects as $project)
-                        <option value="{{ $project->_id }}" {{ old('project_id') == $project->_id ? 'selected' : '' }}>
+                        <option value="{{ $project->_id }}" {{ (string) $selectedProjectId === (string) $project->_id ? 'selected' : '' }}>
                             {{ $project->name }}
                         </option>
                     @endforeach
@@ -218,7 +218,19 @@
                 @enderror
             </div>
         </div>
-        <div data-flux-field class="relative {{ $errors->has('chartAccount_id') ? 'error' : '' }}">
+        <div id="contractBudgetAllocations" class="hidden space-y-3">
+            <div class="flex items-center justify-between">
+                <label class="block text-base text-gray-700 dark:text-neutral-200">
+                    {{ __('Budget Codes') }}
+                </label>
+            </div>
+            <div id="contractBudgetRows" class="space-y-3"></div>
+            @error('payment_allocations')
+            <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+            @enderror
+        </div>
+
+        <div id="legacyChartAccountField" data-flux-field class="relative {{ $errors->has('chartAccount_id') ? 'error' : '' }}">
             <label for="chartAccount_id"  class="block text-base  text-gray-700 dark:text-neutral-200">
                 {{ __('Budget Code') }}
             </label>
@@ -331,6 +343,9 @@
         </div>
     </div>
     <script>
+        window.payContractsForFront = @js($contractsForFront);
+        window.oldPaymentAllocations = @js($oldAllocations);
+
         function openCreatePayModal() {
             if (window.HSOverlay) {
                 HSOverlay.autoInit();
@@ -353,15 +368,21 @@
             Alpine.data('contractSelect', ({ contracts, oldContractorId, oldContractId }) => ({
                 contracts,
                 showContract: false,
+                currentContractorId: '',
 
                 init() {
+                    document.getElementById('project_id')?.addEventListener('change', () => {
+                        this.onContractorChange(this.currentContractorId);
+                    });
+
                     if (oldContractorId) {
                         this.onContractorChange(oldContractorId, oldContractId);
                     }
                 },
 
                 onContractorChange(contractorId, contractToSelect = null) {
-                    const filteredContracts = this.contracts.filter(contract => contract.contractor_id === contractorId);
+                    this.currentContractorId = contractorId;
+                    const filteredContracts = this.filteredContracts(contractorId);
                     this.showContract = filteredContracts.length > 0;
 
                     this.$nextTick(() => {
@@ -374,6 +395,15 @@
                         this.reInitHSSelect('#contract_id');
                         this.setHSSelectValue('#contract_id', contractToSelect ?? '');
                     });
+                },
+
+                filteredContracts(contractorId) {
+                    const projectId = document.getElementById('project_id')?.value ?? '';
+
+                    return this.contracts.filter(contract =>
+                        contract.contractor_id === contractorId &&
+                        (!projectId || contract.project_id === projectId)
+                    );
                 },
 
                 fillContractOptions(contracts) {
@@ -389,6 +419,7 @@
                     const el = document.querySelector('#contract_id');
                     if (el) el.value = '';
                     this.setHSSelectValue('#contract_id', '');
+                    renderContractBudgetAllocations('');
                 },
 
                 reInitHSSelect(selector) {
@@ -422,6 +453,8 @@
                         el.value = value;
                         el.dispatchEvent(new Event('change', { bubbles: true }));
                     }
+
+                    renderContractBudgetAllocations(value);
                 },
 
                 escapeHtml(str) {
@@ -434,37 +467,154 @@
                 }
             }));
 
+            document.getElementById('contract_id')?.addEventListener('change', (event) => {
+                renderContractBudgetAllocations(event.target.value);
+            });
+
             const input = document.getElementById('amount');
 
             input.addEventListener('input', function() {
                 let value = this.value;
 
                 // Quitar todo excepto números y punto
-                value = value.replace(/[^0-9.]/g, '');
+                value = value.replace(/[^0-9,.]/g, '');
 
                 // Separar entero y decimal
-                const parts = value.split('.');
-                let integerPart = parts[0] || '0';
-                let decimalPart = parts[1] || '';
+                const lastComma = value.lastIndexOf(',');
+                const lastDot = value.lastIndexOf('.');
+                const decimalIndex = Math.max(lastComma, lastDot);
+                const hasDecimal = decimalIndex >= 0;
+                let integerPart = hasDecimal ? value.slice(0, decimalIndex) : value;
+                let decimalPart = hasDecimal ? value.slice(decimalIndex + 1) : '';
+
+                integerPart = integerPart.replace(/[.,]/g, '') || '0';
+                decimalPart = decimalPart.replace(/[.,]/g, '');
 
                 // Limitar decimales a 2
                 decimalPart = decimalPart.substring(0, 2);
 
                 // Formatear la parte entera con separadores de miles
-                integerPart = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+                integerPart = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 
                 // Unir entero y decimal solo si hay decimal
-                if (parts.length > 1) {
-                    this.value = `$${integerPart}.${decimalPart}`;
+                if (hasDecimal) {
+                    this.value = `$${integerPart},${decimalPart}`;
                 } else {
                     this.value = `$${integerPart}`;
                 }
             });
             // Limpiar formato antes de enviar el formulario
             input.closest('form').addEventListener('submit', function() {
-                input.value = input.value.replace(/[$,]/g, '');
+                input.value = input.value.replace(/\$/g, '').replace(/\./g, '').replace(',', '.');
             });
         });
+
+        function renderContractBudgetAllocations(contractId) {
+            const section = document.getElementById('contractBudgetAllocations');
+            const rows = document.getElementById('contractBudgetRows');
+            const legacy = document.getElementById('legacyChartAccountField');
+            const chartSelect = document.getElementById('chartAccount_id');
+            const amountInput = document.getElementById('amount');
+            const contract = window.payContractsForFront.find(item => item.id === contractId);
+
+            rows.innerHTML = '';
+
+            if (!contract || !Array.isArray(contract.budgets) || contract.budgets.length === 0) {
+                section.classList.add('hidden');
+                legacy.classList.remove('hidden');
+                legacy.style.display = '';
+                chartSelect.disabled = false;
+                amountInput.readOnly = false;
+                return;
+            }
+
+            section.classList.remove('hidden');
+            legacy.classList.add('hidden');
+            legacy.style.display = 'none';
+            chartSelect.disabled = true;
+            chartSelect.value = '';
+            if (window.HSSelect) {
+                window.HSSelect.getInstance('#chartAccount_id')?.setValue('');
+            }
+            amountInput.readOnly = true;
+
+            const oldByAccount = Object.fromEntries((window.oldPaymentAllocations || []).map(item => [item.chartAccount_id, item.amount]));
+
+            contract.budgets.forEach((budget, index) => {
+                const value = oldByAccount[budget.chartAccount_id] ?? '';
+                rows.insertAdjacentHTML('beforeend', `
+                    <div class="contract-budget-row rounded-lg border border-gray-200 p-3 dark:border-neutral-700">
+                        <div class="grid grid-cols-1 items-start gap-3 sm:grid-cols-[1fr_240px]">
+                            <div class="relative flex items-start p-2">
+                                <div class="flex items-center h-5 mt-1">
+                                    <input id="payment-allocation-${index}" type="checkbox" class="budget-check shrink-0 size-4 bg-transparent border-gray-300 rounded-sm shadow-2xs text-blue-600 focus:ring-0 focus:ring-offset-0 checked:bg-blue-600 checked:border-blue-600 disabled:opacity-50 disabled:pointer-events-none dark:border-neutral-600" aria-describedby="payment-allocation-${index}-description" ${value ? 'checked' : ''}>
+                                </div>
+                                <label for="payment-allocation-${index}" class="ms-3">
+                                    <span class="block text-sm font-semibold text-gray-800 dark:text-neutral-100">${escapePayHtml(budget.name)}</span>
+                                    <span id="payment-allocation-${index}-description" class="budget-remaining mt-1 block text-sm text-gray-500 dark:text-neutral-400" data-remaining="${budget.remaining}">
+                                        {{ __('Available budget') }}: ${formatMoney(budget.remaining)}
+                                    </span>
+                                </label>
+                            </div>
+                            <input type="number" min="0" step="0.01" inputmode="decimal" class="allocation-amount w-full rounded-lg border border-gray-200 bg-white px-3 py-3 text-sm text-gray-800 dark:bg-neutral-700 dark:border-neutral-700 dark:text-neutral-200" name="payment_allocations[${index}][amount]" value="${value}">
+                        </div>
+                        <input type="hidden" name="payment_allocations[${index}][chartAccount_id]" value="${escapePayHtml(budget.chartAccount_id)}">
+                    </div>
+                `);
+            });
+
+            rows.querySelectorAll('.budget-check, .allocation-amount').forEach(input => {
+                input.addEventListener('input', updatePaymentAllocationTotal);
+                input.addEventListener('change', updatePaymentAllocationTotal);
+            });
+
+            updatePaymentAllocationTotal();
+        }
+
+        function updatePaymentAllocationTotal() {
+            let total = 0;
+
+            document.querySelectorAll('#contractBudgetRows .contract-budget-row').forEach(row => {
+                const checked = row.querySelector('.budget-check').checked;
+                const input = row.querySelector('.allocation-amount');
+                const remainingEl = row.querySelector('.budget-remaining');
+                const remaining = parseFloat(remainingEl.dataset.remaining || '0');
+                const value = checked ? parseFloat(input.value || '0') : 0;
+
+                input.disabled = !checked;
+
+                if (!checked) {
+                    input.value = '';
+                }
+
+                total += value;
+
+                if (value > remaining) {
+                    remainingEl.classList.remove('text-gray-500', 'dark:text-neutral-400');
+                    remainingEl.classList.add('text-red-600', 'dark:text-red-400');
+                    remainingEl.textContent = `{{ __('Available budget') }}: ${formatMoney(remaining)} - {{ __('Exceeded') }}`;
+                } else {
+                    remainingEl.classList.remove('text-red-600', 'dark:text-red-400');
+                    remainingEl.classList.add('text-gray-500', 'dark:text-neutral-400');
+                    remainingEl.textContent = `{{ __('Available budget') }}: ${formatMoney(remaining)}`;
+                }
+            });
+
+            document.getElementById('amount').value = total.toFixed(2);
+        }
+
+        function formatMoney(value) {
+            return '$' + Number(value || 0).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function escapePayHtml(str) {
+            return String(str)
+                .replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;')
+                .replaceAll("'", '&#039;');
+        }
 
         document.addEventListener('alpine:init', () => {
             Alpine.data('subprojectSelect', ({ projects, oldProjectId, oldSubproject }) => ({

@@ -15,6 +15,7 @@ class Pay extends Model
         'contractor_id',
         'contract_id',
         'chartAccount_id',
+        'payment_allocations',
         'amount',
         'description',
         'attachment_link',
@@ -71,6 +72,6 @@ class Pay extends Model
     }
     public function getAmountFormattedAttribute()
     {
-        return '$' . number_format($this->amount, 2);
+        return '$' . number_format($this->amount, 2, ',', '.');
     }
 }

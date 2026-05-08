@@ -6,6 +6,29 @@
     @php
         $userRole = Auth::user()->role;
         $userId = Auth::id();
+        $lockedProjectId = (string) ($effectiveProjectId ?? '');
+        $chartAccountsForFront = $chartAccounts->map(fn ($chartAccount) => [
+            'id' => (string) $chartAccount->_id,
+            'name' => $chartAccount->name,
+        ])->values();
+        $contractSelectConfig = [
+            'hasSearch' => true,
+            'optionAllowEmptyOption' => true,
+            'minSearchLength' => 3,
+            'searchPlaceholder' => __('Search'),
+            'searchClasses' => 'block w-full sm:text-sm border-gray-200 rounded-lg focus:border-blue-500 focus:ring-blue-500 before:absolute before:inset-0 before:z-1 dark:bg-neutral-700 dark:border-neutral-700 dark:text-neutral-400 dark:placeholder-neutral-500 py-1.5 sm:py-2 px-3',
+            'searchWrapperClasses' => 'bg-white p-2 -mx-1 sticky top-0 dark:bg-neutral-700',
+            'placeholder' => __('Select'),
+            'toggleTag' => '<button type="button" aria-expanded="false"><span class="me-2" data-icon></span><span class="text-gray-800 dark:text-neutral-200 " data-title></span></button>',
+            'toggleClasses' => 'hs-select-disabled:pointer-events-none hs-select-disabled:opacity-50 relative py-3 ps-4 pe-9 flex gap-x-2 text-nowrap w-full cursor-pointer bg-white border border-gray-200 rounded-lg text-start text-sm focus:outline-hidden focus:ring-2 focus:ring-blue-500 dark:bg-neutral-700 dark:border-neutral-700 dark:text-neutral-400 dark:focus:outline-hidden dark:focus:ring-1 dark:focus:ring-neutral-600',
+            'dropdownClasses' => 'mt-2 max-h-72 pb-1 px-1 space-y-0.5 z-20 w-full bg-white border border-gray-200 rounded-lg overflow-hidden overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-gray-100 [&::-webkit-scrollbar-thumb]:bg-gray-300 dark:[&::-webkit-scrollbar-track]:bg-neutral-700 dark:[&::-webkit-scrollbar-thumb]:bg-neutral-500 dark:bg-neutral-700 dark:border-neutral-700',
+            'optionClasses' => 'py-2 px-4 w-full text-sm text-gray-800 cursor-pointer hover:bg-gray-100 rounded-lg focus:outline-hidden focus:bg-gray-100 dark:bg-neutral-700 dark:hover:bg-neutral-800 dark:text-neutral-200 dark:focus:bg-neutral-800',
+            'optionTemplate' => '<div class="flex justify-between items-center w-full"><span data-title></span><span class="hidden hs-selected:block"><svg class="shrink-0 size-3.5 text-black dark:text-white" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span></div>',
+            'extraMarkup' => [
+                '<div class="hidden hs-error:block absolute top-1/2 end-8 -translate-y-1/2"><svg class="shrink-0 size-4 text-red-500" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg></div>',
+                '<div class="absolute top-1/2 end-3 -translate-y-1/2"><svg class="shrink-0 size-3.5 text-gray-500 dark:text-neutral-500 " xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 15 5 5 5-5"/><path d="m7 9 5-5 5 5"/></svg></div>',
+            ],
+        ];
     @endphp
 
     <div class="flex flex-col">
@@ -29,7 +52,9 @@
 
                                 <th scope="col" class="px-6 py-3 text-start text-xs font-medium text-gray-500 uppercase dark:text-neutral-500">{{__('Name')}}</th>
                                 <th scope="col" class="px-6 py-3 text-start text-xs font-medium text-gray-500 uppercase dark:text-neutral-500">{{__('Vendor')}}</th>
+                                <th scope="col" class="px-6 py-3 text-start text-xs font-medium text-gray-500 uppercase dark:text-neutral-500">{{__('Project')}}</th>
                                 <th scope="col" class="px-6 py-3 text-start text-xs font-medium text-gray-500 uppercase dark:text-neutral-500">{{__('Compensation')}}</th>
+                                <th scope="col" class="px-6 py-3 text-start text-xs font-medium text-gray-500 uppercase dark:text-neutral-500">{{__('Available budget')}}</th>
                                 <th scope="col" class="px-6 py-3 text-end text-xs font-medium text-gray-500 uppercase dark:text-neutral-500">{{__('Actions')}}</th>
                             </tr>
                             </thead>
@@ -37,8 +62,10 @@
                             @forelse ($contracts as $contract)
                                 <tr >
                                     <td class="px-4 py-4 text-sm font-medium text-gray-800 break-words dark:text-neutral-200">{{ $contract->name }}</td>
-                                    <td class="px-4 py-4 text-sm font-medium text-gray-800 break-words dark:text-neutral-200">{{ $contract->contractor->company_name }}</td>
+                                    <td class="px-4 py-4 text-sm font-medium text-gray-800 break-words dark:text-neutral-200">{{ $contract->contractor->company_name ?? '' }}</td>
+                                    <td class="px-4 py-4 text-sm font-medium text-gray-800 break-words dark:text-neutral-200">{{ $contract->project->name ?? '' }}</td>
                                     <td class="px-4 py-4 text-sm font-medium text-gray-800 dark:text-neutral-200">{{ $contract->compensation_formatted }}</td>
+                                    <td class="px-4 py-4 text-sm font-medium text-gray-800 dark:text-neutral-200">{{ $contract->remaining_budget_total_formatted }}</td>
                                     <td class="px-6 py-4 flex justify-center gap-2">
 
 
@@ -78,6 +105,8 @@
                                     </td>
                                     <td ></td>
                                     <td ></td>
+                                    <td ></td>
+                                    <td ></td>
                                 </tr>
                             @endforelse
 
@@ -95,7 +124,7 @@
     </div>
 
 
-    <div id="edit-contract" class="hs-overlay hs-overlay-open:translate-x-0 hidden translate-x-full fixed top-0 end-0 transition-all duration-300 transform h-full max-w-sm w-full z-80 bg-white border-e border-gray-200 dark:bg-neutral-800 dark:border-neutral-700" role="dialog" tabindex="-1" aria-labelledby="edit-contract-label">
+    <div id="edit-contract" class="hs-overlay hs-overlay-open:translate-x-0 hidden translate-x-full fixed top-0 end-0 transition-all duration-300 transform h-full max-w-2xl w-full z-80 bg-white border-e border-gray-200 dark:bg-neutral-800 dark:border-neutral-700" role="dialog" tabindex="-1" aria-labelledby="edit-contract-label">
         <div class="flex justify-between items-center py-3 px-4 border-b border-gray-200 dark:border-neutral-700">
             <h3 id="edit-contract-label" class="font-bold text-gray-800 dark:text-white">
                 {{ __("Edit :name", ['name' => __('Contract')]) }}
@@ -148,7 +177,33 @@
                     <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                     @enderror
                 </div>
+                <div data-flux-field class="relative {{ $errors->has('project_id') ? 'error' : '' }}">
+                    <label for="project_id" class="block text-base text-gray-700 dark:text-neutral-200">
+                        {{ __('Project') }}
+                    </label>
+                    @if($lockedProjectId)
+                        <input type="hidden" name="project_id" value="{{ $lockedProjectId }}">
+                    @endif
+                    <select id="project_id" name="{{ $lockedProjectId ? '' : 'project_id' }}" class="hidden" data-hs-select='@json($contractSelectConfig)' {{ $lockedProjectId ? 'disabled' : '' }}>
+                        <option value=""></option>
+                        @foreach($projects as $project)
+                            <option value="{{ $project->_id }}" {{ ($lockedProjectId ?: old('project_id')) == $project->_id ? 'selected' : '' }}>{{ $project->name }}</option>
+                        @endforeach
+                    </select>
+                    @error('project_id')
+                    <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                    @enderror
+                </div>
                 <flux:input label="{{__('Compensation')}}"  id="compensation" name="compensation" :value="old('compensation')" />
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between gap-3">
+                        <label class="block text-base text-gray-700 dark:text-neutral-200">
+                            {{ __('Budget Code') }} / {{ __('Budget') }}
+                        </label>
+                        <flux:button type="button" variant="filled" icon="plus" onclick="addEditBudgetRow()">{{ __('Add') }}</flux:button>
+                    </div>
+                    <div id="editBudgetRows" class="space-y-3"></div>
+                </div>
                 <div id="formErrors" class="text-red-500 text-sm"></div>
                 <div class="flex gap-3">
 
@@ -245,7 +300,95 @@
 
     @push('scripts')
         <script>
-            function openEditModal(contract) {
+            window.contractChartAccountOptions = @json($chartAccountsForFront);
+            window.contractBudgetSelectConfig = @json($contractSelectConfig);
+            window.lockedContractProjectId = @json($lockedProjectId);
+
+            window.addEditBudgetRow = function (budget = {}) {
+                const rows = document.getElementById('editBudgetRows');
+                const index = rows.querySelectorAll('.budget-row').length;
+                const selectedChartAccountId = String(budget.chartAccount_id ?? '');
+                const options = window.contractChartAccountOptions
+                    .map(account => {
+                        const selected = String(account.id) === selectedChartAccountId ? 'selected' : '';
+                        return `<option value="${escapeContractHtml(account.id)}" ${selected}>${escapeContractHtml(account.name)}</option>`;
+                    })
+                    .join('');
+
+                const remaining = budget.remaining ?? budget.budget ?? 0;
+                const spent = budget.spent ?? 0;
+
+                rows.insertAdjacentHTML('beforeend', `
+                    <div class="budget-row grid grid-cols-1 gap-3 sm:grid-cols-[1fr_180px_44px]">
+                        <div>
+                            <select name="contract_budgets[${index}][chartAccount_id]" class="budget-account hidden">
+                                <option value=""></option>${options}
+                            </select>
+                            <div class="mt-1 flex flex-wrap gap-x-2 gap-y-0 text-[11px] leading-tight text-gray-500 dark:text-neutral-400">
+                                <span>{{ __('Available budget') }}: ${formatContractMoney(remaining)}</span>
+                                <span>{{ __('Spent') }}: ${formatContractMoney(spent)}</span>
+                            </div>
+                        </div>
+                        <div>
+                            <input type="number" min="0" step="0.01" inputmode="decimal" name="contract_budgets[${index}][budget]" value="${escapeContractHtml(budget.budget ?? '')}" class="budget-amount w-full rounded-lg border border-gray-200 bg-white px-3 py-3 text-sm text-gray-800 focus:border-blue-500 focus:ring-blue-500 dark:bg-neutral-700 dark:border-neutral-700 dark:text-neutral-200" placeholder="{{ __('Budget') }}">
+                        </div>
+                        <button type="button" class="rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-700" onclick="removeEditBudgetRow(this)">X</button>
+                    </div>
+                `);
+
+                initEditBudgetSelect(rows.lastElementChild.querySelector('.budget-account'));
+            };
+
+            window.removeEditBudgetRow = function (button) {
+                const rows = document.querySelectorAll('#editBudgetRows .budget-row');
+                if (rows.length === 1) {
+                    rows[0].querySelector('.budget-account').value = '';
+                    rows[0].querySelector('.budget-amount').value = '';
+                    return;
+                }
+
+                button.closest('.budget-row').remove();
+                reindexEditBudgetRows();
+            };
+
+            function reindexEditBudgetRows() {
+                document.querySelectorAll('#editBudgetRows .budget-row').forEach((row, index) => {
+                    row.querySelector('.budget-account').name = `contract_budgets[${index}][chartAccount_id]`;
+                    row.querySelector('.budget-amount').name = `contract_budgets[${index}][budget]`;
+                });
+            }
+
+            function initEditBudgetSelect(select) {
+                if (!select || !window.HSSelect) return;
+
+                select.setAttribute('data-hs-select', JSON.stringify(window.contractBudgetSelectConfig));
+                new window.HSSelect(select);
+            }
+
+            function renderEditBudgets(budgets) {
+                const rows = document.getElementById('editBudgetRows');
+                rows.innerHTML = '';
+                const contractBudgets = Array.isArray(budgets) && budgets.length ? budgets : [{}];
+                contractBudgets.forEach((budget) => window.addEditBudgetRow(budget));
+            }
+
+            function escapeContractHtml(str) {
+                return String(str)
+                    .replaceAll('&', '&amp;')
+                    .replaceAll('<', '&lt;')
+                    .replaceAll('>', '&gt;')
+                    .replaceAll('"', '&quot;')
+                    .replaceAll("'", '&#039;');
+            }
+
+            function formatContractMoney(value) {
+                return '$' + Number(value || 0).toLocaleString('es-CO', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                });
+            }
+
+            window.openEditModal = function (contract) {
                 console.log(contract);
                 if (window.HSOverlay) {
                     HSOverlay.autoInit();
@@ -256,12 +399,16 @@
                 }
                 document.getElementById('name').value = contract.name;
                 document.getElementById('compensation').value = contract.compensation;
+                const projectId = window.lockedContractProjectId || contract.project_id || '';
+                document.getElementById('project_id').value = projectId;
+                renderEditBudgets(contract.contract_budgets ?? []);
+                HSSelect.getInstance('#project_id').setValue(projectId);
 
 
                 HSSelect.getInstance('#contractor_id').setValue(contract.contractor_id);
                 document.getElementById('editContractForm').action = `/contracts/${contract.id}`;
                 document.getElementById('deleteContractForm').action = `/contracts/${contract.id}`;
-            }
+            };
 
 
 
