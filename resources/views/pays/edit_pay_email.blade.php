@@ -502,16 +502,11 @@
                 // Quitar todo excepto números y punto
                 value = value.replace(/[^0-9,.]/g, '');
 
-                // Separar entero y decimal
-                const lastComma = value.lastIndexOf(',');
-                const lastDot = value.lastIndexOf('.');
-                const decimalIndex = Math.max(lastComma, lastDot);
-                const hasDecimal = decimalIndex >= 0;
-                let integerPart = hasDecimal ? value.slice(0, decimalIndex) : value;
-                let decimalPart = hasDecimal ? value.slice(decimalIndex + 1) : '';
-
-                integerPart = integerPart.replace(/[.,]/g, '') || '0';
-                decimalPart = decimalPart.replace(/[.,]/g, '');
+                // La coma es decimal; el punto siempre se trata como miles.
+                const hasDecimal = value.includes(',');
+                const parts = value.split(',');
+                let integerPart = parts[0].replace(/[.,]/g, '').replace(/^0+(?=\d)/, '') || '0';
+                let decimalPart = parts.slice(1).join('').replace(/[.,]/g, '');
 
                 // Limitar decimales a 2
                 decimalPart = decimalPart.substring(0, 2);

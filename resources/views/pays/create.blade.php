@@ -333,10 +333,12 @@
                     </button>
 
                     <flux:button
+                        id="confirmCreatePayButton"
                         type="button"
                         variant="primary"
+                        data-processing-label="{{ __('Processing') }}..."
                         onclick="submitCreatePayForm()">
-                        {{ __('Create') }}
+                        <span class="confirm-create-pay-label">{{ __('Create') }}</span>
                     </flux:button>
                 </div>
             </div>
@@ -345,6 +347,7 @@
     <script>
         window.payContractsForFront = @js($contractsForFront);
         window.oldPaymentAllocations = @js($oldAllocations);
+        window.createPaySubmitting = false;
 
         function openCreatePayModal() {
             if (window.HSOverlay) {
@@ -354,11 +357,23 @@
         }
 
         function submitCreatePayForm() {
+            if (window.createPaySubmitting) return;
+
             const form = document.getElementById('createPayForm');
             const amountInput = document.getElementById('amount');
+            const submitButton = document.getElementById('confirmCreatePayButton');
+            window.createPaySubmitting = true;
+
+            if (submitButton) {
+                submitButton.disabled = true;
+                submitButton.classList.add('opacity-70', 'pointer-events-none');
+                submitButton.insertAdjacentHTML('afterbegin', '<span class="confirm-create-pay-spinner animate-spin inline-block size-4 border-3 border-current border-t-transparent rounded-[999px]" role="status" aria-label="{{ __('Processing') }}"></span>');
+                const label = submitButton.querySelector('.confirm-create-pay-label');
+                if (label) label.textContent = submitButton.dataset.processingLabel || 'Processing...';
+            }
 
             if (amountInput) {
-                amountInput.value = amountInput.value.replace(/[$,]/g, '');
+                amountInput.value = amountInput.value.replace(/\$/g, '').replace(/\./g, '').replace(',', '.');
             }
 
             form.submit();
@@ -479,16 +494,11 @@
                 // Quitar todo excepto números y punto
                 value = value.replace(/[^0-9,.]/g, '');
 
-                // Separar entero y decimal
-                const lastComma = value.lastIndexOf(',');
-                const lastDot = value.lastIndexOf('.');
-                const decimalIndex = Math.max(lastComma, lastDot);
-                const hasDecimal = decimalIndex >= 0;
-                let integerPart = hasDecimal ? value.slice(0, decimalIndex) : value;
-                let decimalPart = hasDecimal ? value.slice(decimalIndex + 1) : '';
-
-                integerPart = integerPart.replace(/[.,]/g, '') || '0';
-                decimalPart = decimalPart.replace(/[.,]/g, '');
+                // La coma es decimal; el punto siempre se trata como miles.
+                const hasDecimal = value.includes(',');
+                const parts = value.split(',');
+                let integerPart = parts[0].replace(/[.,]/g, '').replace(/^0+(?=\d)/, '') || '0';
+                let decimalPart = parts.slice(1).join('').replace(/[.,]/g, '');
 
                 // Limitar decimales a 2
                 decimalPart = decimalPart.substring(0, 2);

@@ -388,6 +388,21 @@
                 });
             }
 
+            function formatContractMoneyInput(input) {
+                let value = input.value.replace(/[^0-9,.]/g, '');
+                const hasDecimal = value.includes(',');
+                const parts = value.split(',');
+                let integerPart = parts[0].replace(/[.,]/g, '').replace(/^0+(?=\d)/, '') || '0';
+                let decimalPart = parts.slice(1).join('').replace(/[.,]/g, '').substring(0, 2);
+
+                integerPart = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                input.value = hasDecimal ? `$${integerPart},${decimalPart}` : `$${integerPart}`;
+            }
+
+            function normalizeContractMoneyValue(value) {
+                return String(value || '').replace(/\$/g, '').replace(/\./g, '').replace(',', '.');
+            }
+
             window.openEditModal = function (contract) {
                 console.log(contract);
                 if (window.HSOverlay) {
@@ -428,11 +443,24 @@
                 $('#hs-table-with-pagination-search').on('keyup', function () {
                     table.search(this.value).draw();
                 });
+
+                const compensationInput = document.getElementById('compensation');
+                compensationInput?.addEventListener('input', function () {
+                    formatContractMoneyInput(this);
+                });
+
                 $("#editContractForm").on("submit", function (e) {
                     e.preventDefault(); // evita reload
 
                     let form = $(this);
                     let action = form.attr("action");
+                    const compensationInput = document.getElementById('compensation');
+                    if (compensationInput) {
+                        compensationInput.value = normalizeContractMoneyValue(compensationInput.value);
+                    }
+                    document.querySelectorAll('#editBudgetRows .budget-amount').forEach((budgetInput) => {
+                        budgetInput.value = normalizeContractMoneyValue(budgetInput.value);
+                    });
                     let data = form.serialize();
 
                     $("#formErrors").html("");
