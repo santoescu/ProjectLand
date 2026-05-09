@@ -83,7 +83,7 @@
             <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
             @enderror
         </div>
-        <flux:input label="{{__('Compensation')}}"  id="compensation" name="compensation" :value="old('compensation')" />
+        <flux:input label="{{__('Compensation')}}"  id="compensation" name="compensation" :value="old('compensation')" readonly />
 
         <div class="space-y-3">
             <div class="flex items-center justify-between gap-3">
@@ -152,6 +152,7 @@
             `);
 
             initBudgetSelect(rows.lastElementChild.querySelector('.budget-account'));
+            updateCompensationFromBudgets();
         }
 
         function removeBudgetRow(button) {
@@ -159,11 +160,13 @@
             if (rows.length === 1) {
                 rows[0].querySelector('.budget-account').value = '';
                 rows[0].querySelector('.budget-amount').value = '';
+                updateCompensationFromBudgets();
                 return;
             }
 
             button.closest('.budget-row').remove();
             reindexBudgetRows();
+            updateCompensationFromBudgets();
         }
 
         function initBudgetSelect(select) {
@@ -189,8 +192,29 @@
                 .replaceAll("'", '&#039;');
         }
 
+        function formatMoneyForInput(value) {
+            return '$' + Number(value || 0).toLocaleString('es-CO', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+            });
+        }
+
+        function updateCompensationFromBudgets() {
+            const total = Array.from(document.querySelectorAll('#budgetRows .budget-amount'))
+                .reduce((sum, budgetInput) => sum + (parseFloat(budgetInput.value || '0') || 0), 0);
+
+            document.getElementById('compensation').value = formatMoneyForInput(total);
+        }
+
         document.addEventListener('alpine:init', () => {
             const input = document.getElementById('compensation');
+
+            document.getElementById('budgetRows')?.addEventListener('input', function(event) {
+                if (event.target.classList.contains('budget-amount')) {
+                    updateCompensationFromBudgets();
+                }
+            });
+            updateCompensationFromBudgets();
 
             input.addEventListener('input', function() {
                 let value = this.value;

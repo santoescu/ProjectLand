@@ -398,5 +398,13 @@
     "When you create a project, it will appear here with its assigned SVG or the default image.": "Cuando crees un proyecto, aparecerá¡ aquá con su SVG asignado o la imagen predeterminada.",
     "This project has no subprojects registered.": "Este proyecto no tiene subproyectos registrados.",
     ":count project|:count projects": ":count proyecto|:count proyectos",
-    ":count subproject|:count subprojects": ":count subproyecto|:count subproyectos"
+    ":count subproject|:count subprojects": ":count subproyecto|:count subproyectos",
+    "Contract payment detail": "Detalle de pagos del contrato",
+    "Back": "Volver",
+    "No records found": "No se encontraron registros",
+    "Total": "Total",
+    "Information": "Información",
+    "Payments": "Pagos",
+    "Balance": "Balance",
+    "Paid percentage": "Porcentaje pagado"
 }

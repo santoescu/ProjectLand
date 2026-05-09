@@ -78,7 +78,7 @@
                                         </flux:button>
 
                                         @if (in_array($userRole, ['accounting_assistant','director','admin']) )
-                                            <a href="">
+                                            <a href="{{ route('contracts.show', $contract) }}">
                                                 <flux:button
                                                     size="sm"
                                                     variant="primary"
@@ -194,7 +194,7 @@
                     <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                     @enderror
                 </div>
-                <flux:input label="{{__('Compensation')}}"  id="compensation" name="compensation" :value="old('compensation')" />
+                <flux:input label="{{__('Compensation')}}"  id="compensation" name="compensation" :value="old('compensation')" readonly />
                 <div class="space-y-3">
                     <div class="flex items-center justify-between gap-3">
                         <label class="block text-base text-gray-700 dark:text-neutral-200">
@@ -337,6 +337,7 @@
                 `);
 
                 initEditBudgetSelect(rows.lastElementChild.querySelector('.budget-account'));
+                updateEditCompensationFromBudgets();
             };
 
             window.removeEditBudgetRow = function (button) {
@@ -344,11 +345,13 @@
                 if (rows.length === 1) {
                     rows[0].querySelector('.budget-account').value = '';
                     rows[0].querySelector('.budget-amount').value = '';
+                    updateEditCompensationFromBudgets();
                     return;
                 }
 
                 button.closest('.budget-row').remove();
                 reindexEditBudgetRows();
+                updateEditCompensationFromBudgets();
             };
 
             function reindexEditBudgetRows() {
@@ -388,6 +391,13 @@
                 });
             }
 
+            function updateEditCompensationFromBudgets() {
+                const total = Array.from(document.querySelectorAll('#editBudgetRows .budget-amount'))
+                    .reduce((sum, budgetInput) => sum + (parseFloat(budgetInput.value || '0') || 0), 0);
+
+                document.getElementById('compensation').value = formatContractMoney(total);
+            }
+
             function formatContractMoneyInput(input) {
                 let value = input.value.replace(/[^0-9,.]/g, '');
                 const hasDecimal = value.includes(',');
@@ -413,10 +423,10 @@
                     HSSelect.autoInit();
                 }
                 document.getElementById('name').value = contract.name;
-                document.getElementById('compensation').value = contract.compensation;
                 const projectId = window.lockedContractProjectId || contract.project_id || '';
                 document.getElementById('project_id').value = projectId;
                 renderEditBudgets(contract.contract_budgets ?? []);
+                updateEditCompensationFromBudgets();
                 HSSelect.getInstance('#project_id').setValue(projectId);
 
 
@@ -448,12 +458,18 @@
                 compensationInput?.addEventListener('input', function () {
                     formatContractMoneyInput(this);
                 });
+                document.getElementById('editBudgetRows')?.addEventListener('input', function(event) {
+                    if (event.target.classList.contains('budget-amount')) {
+                        updateEditCompensationFromBudgets();
+                    }
+                });
 
                 $("#editContractForm").on("submit", function (e) {
                     e.preventDefault(); // evita reload
 
                     let form = $(this);
                     let action = form.attr("action");
+                    updateEditCompensationFromBudgets();
                     const compensationInput = document.getElementById('compensation');
                     if (compensationInput) {
                         compensationInput.value = normalizeContractMoneyValue(compensationInput.value);

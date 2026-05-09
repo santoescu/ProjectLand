@@ -48,6 +48,50 @@ class ContractController extends Controller
         return view('contracts.create', compact('contractors', 'projects', 'chartAccounts', 'selectedProject', 'effectiveProjectId'));
     }
 
+    public function show($id)
+    {
+        $contract = Contract::with('contractor', 'project')->findOrFail($id);
+        $chartAccounts = ChartAccount::all()->keyBy(fn ($chartAccount) => (string) $chartAccount->_id);
+        $payments = Pay::where('contract_id', (string) $contract->_id)
+            ->where('status', 2)
+            ->orderBy('created_at')
+            ->get()
+            ->map(function ($pay) {
+                $paidHistory = collect($pay->histories ?? [])->first(function ($history) {
+                    return in_array($history['action'] ?? '', ['Paid', __('Paid')], true);
+                });
+
+                $pay->paid_at = data_get($paidHistory, 'created_at') ?? $pay->updated_at ?? $pay->created_at;
+
+                return $pay;
+            })
+            ->sortBy('paid_at')
+            ->values();
+
+        $budgetRows = collect($contract->contract_budgets ?? [])->map(function ($budget) use ($chartAccounts, $payments) {
+            $chartAccountId = (string) ($budget['chartAccount_id'] ?? '');
+            $paymentAmounts = $payments->mapWithKeys(function ($pay) use ($chartAccountId) {
+                $allocations = collect($pay->payment_allocations ?? []);
+                $amount = $allocations->isNotEmpty()
+                    ? $allocations->where('chartAccount_id', $chartAccountId)->sum(fn ($allocation) => (float) ($allocation['amount'] ?? 0))
+                    : ((string) ($pay->chartAccount_id ?? '') === $chartAccountId ? (float) ($pay->amount ?? 0) : 0);
+
+                return [(string) $pay->_id => $amount];
+            });
+
+            return [
+                'chartAccount_id' => $chartAccountId,
+                'chartAccount_name' => $chartAccounts->get($chartAccountId)?->name ?? '',
+                'budget' => (float) ($budget['budget'] ?? 0),
+                'spent' => (float) ($budget['spent'] ?? $paymentAmounts->sum()),
+                'remaining' => (float) ($budget['remaining'] ?? max(((float) ($budget['budget'] ?? 0)) - $paymentAmounts->sum(), 0)),
+                'payments' => $paymentAmounts,
+            ];
+        })->values();
+
+        return view('contracts.show', compact('contract', 'payments', 'budgetRows'));
+    }
+
     /**
      * Guardar nuevo contratista.
      */
@@ -109,7 +153,6 @@ class ContractController extends Controller
 
         $data = $request->validate([
             'name' => 'required|string|max:255',
-            'compensation' => 'required|numeric|min:0',
             'contractor_id' => 'required|string',
             'project_id' => 'required|string',
             'contract_budgets' => 'required|array|min:1',
@@ -131,7 +174,6 @@ class ContractController extends Controller
             }
         }
 
-        $data['compensation'] = (float) $data['compensation'];
         $data['contract_budgets'] = collect($data['contract_budgets'])
             ->map(fn ($budget) => [
                 'chartAccount_id' => (string) $budget['chartAccount_id'],
@@ -139,6 +181,7 @@ class ContractController extends Controller
             ])
             ->values()
             ->all();
+        $data['compensation'] = collect($data['contract_budgets'])->sum('budget');
 
         return $data;
     }
