@@ -194,7 +194,15 @@
                     <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                     @enderror
                 </div>
-                <flux:input label="{{__('Compensation')}}"  id="compensation" name="compensation" :value="old('compensation')" readonly />
+                <div data-flux-field>
+                    <label for="compensation" class="block text-base text-gray-700 dark:text-neutral-200">{{ __('Compensation') }}</label>
+                    <div class="relative">
+                        <input type="text" id="compensation" name="compensation" class="w-full rounded-lg border border-gray-200 bg-white py-3 ps-9 pe-3 text-sm text-gray-800 focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none dark:bg-neutral-700 dark:border-neutral-700 dark:text-neutral-200" value="{{ str_replace('$', '', old('compensation', '')) }}" placeholder="0.00" readonly>
+                        <div class="absolute inset-y-0 inset-s-0 flex items-center pointer-events-none ps-3">
+                            <span class="text-gray-500 dark:text-neutral-400">$</span>
+                        </div>
+                    </div>
+                </div>
                 <div class="space-y-3">
                     <div class="flex items-center justify-between gap-3">
                         <label class="block text-base text-gray-700 dark:text-neutral-200">
@@ -330,7 +338,12 @@
                             </div>
                         </div>
                         <div>
-                            <input type="text" inputmode="decimal" name="contract_budgets[${index}][budget]" value="${escapeContractHtml(budget.budget ?? '')}" class="budget-amount w-full rounded-lg border border-gray-200 bg-white px-3 py-3 text-sm text-gray-800 focus:border-blue-500 focus:ring-blue-500 dark:bg-neutral-700 dark:border-neutral-700 dark:text-neutral-200" placeholder="{{ __('Budget') }}">
+                            <div class="relative">
+                                <input type="text" inputmode="decimal" name="contract_budgets[${index}][budget]" value="${escapeContractHtml(budget.budget ?? '')}" class="budget-amount w-full rounded-lg border border-gray-200 bg-white py-3 ps-9 pe-3 text-sm text-gray-800 focus:border-blue-500 focus:ring-blue-500 dark:bg-neutral-700 dark:border-neutral-700 dark:text-neutral-200" placeholder="0.00">
+                                <div class="absolute inset-y-0 inset-s-0 flex items-center pointer-events-none ps-3">
+                                    <span class="text-gray-500 dark:text-neutral-400">$</span>
+                                </div>
+                            </div>
                         </div>
                         <button type="button" class="rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-700" onclick="removeEditBudgetRow(this)">X</button>
                     </div>
@@ -391,19 +404,41 @@
                 });
             }
 
+            function formatContractMoneyInput(value) {
+                return Number(value || 0).toLocaleString('es-CO', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                });
+            }
+
             function updateEditCompensationFromBudgets() {
                 const total = Array.from(document.querySelectorAll('#editBudgetRows .budget-amount'))
                     .reduce((sum, budgetInput) => sum + parseContractMoneyInput(budgetInput.value), 0);
 
-                document.getElementById('compensation').value = formatContractMoney(total);
+                document.getElementById('compensation').value = formatContractMoneyInput(total);
             }
 
             function parseContractMoneyInput(value) {
                 return Number(normalizeContractMoneyValue(value)) || 0;
             }
 
-            function normalizeContractMoneyValue(value) {
+            function sanitizeContractMoneyInput(value) {
                 value = String(value || '').replace(/[^0-9,.]/g, '');
+                const separatorIndex = value.search(/[,.]/);
+
+                if (separatorIndex === -1) {
+                    return value;
+                }
+
+                const integerPart = value.slice(0, separatorIndex).replace(/[,.]/g, '');
+                const separator = value[separatorIndex];
+                const decimalPart = value.slice(separatorIndex + 1).replace(/[,.]/g, '').substring(0, 2);
+
+                return `${integerPart}${separator}${decimalPart}`;
+            }
+
+            function normalizeContractMoneyValue(value) {
+                value = sanitizeContractMoneyInput(value);
                 const lastComma = value.lastIndexOf(',');
                 const lastDot = value.lastIndexOf('.');
 
@@ -432,12 +467,7 @@
                 }
 
                 const [integerPart, fractionPart] = parts;
-
-                if (fractionPart.length === 3 && integerPart.length <= 3) {
-                    return value.replaceAll(separator, '');
-                }
-
-                return value.replace(separator, '.');
+                return `${integerPart}.${fractionPart.substring(0, 2)}`;
             }
 
             window.openEditModal = function (contract) {
@@ -483,6 +513,7 @@
 
                 document.getElementById('editBudgetRows')?.addEventListener('input', function(event) {
                     if (event.target.classList.contains('budget-amount')) {
+                        event.target.value = sanitizeContractMoneyInput(event.target.value);
                         updateEditCompensationFromBudgets();
                     }
                 });

@@ -83,7 +83,15 @@
             <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
             @enderror
         </div>
-        <flux:input label="{{__('Compensation')}}"  id="compensation" name="compensation" :value="old('compensation')" readonly />
+        <div data-flux-field>
+            <label for="compensation" class="block text-base text-gray-700 dark:text-neutral-200">{{ __('Compensation') }}</label>
+            <div class="relative">
+                <input type="text" id="compensation" name="compensation" class="w-full rounded-lg border border-gray-200 bg-white py-3 ps-9 pe-3 text-sm text-gray-800 focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none dark:bg-neutral-700 dark:border-neutral-700 dark:text-neutral-200" value="{{ str_replace('$', '', old('compensation', '')) }}" placeholder="0.00" readonly>
+                <div class="absolute inset-y-0 inset-s-0 flex items-center pointer-events-none ps-3">
+                    <span class="text-gray-500 dark:text-neutral-400">$</span>
+                </div>
+            </div>
+        </div>
 
         <div class="space-y-3">
             <div class="flex items-center justify-between gap-3">
@@ -102,7 +110,12 @@
                                 <option value="{{ $chartAccount->_id }}" {{ ($budget['chartAccount_id'] ?? '') == $chartAccount->_id ? 'selected' : '' }}>{{ $chartAccount->name }}</option>
                             @endforeach
                         </select>
-                        <input type="text" inputmode="decimal" name="contract_budgets[{{ $index }}][budget]" value="{{ $budget['budget'] ?? '' }}" class="budget-amount w-full rounded-lg border border-gray-200 bg-white px-3 py-3 text-sm text-gray-800 focus:border-blue-500 focus:ring-blue-500 dark:bg-neutral-700 dark:border-neutral-700 dark:text-neutral-200" placeholder="{{ __('Budget') }}">
+                        <div class="relative">
+                            <input type="text" inputmode="decimal" name="contract_budgets[{{ $index }}][budget]" value="{{ $budget['budget'] ?? '' }}" class="budget-amount w-full rounded-lg border border-gray-200 bg-white py-3 ps-9 pe-3 text-sm text-gray-800 focus:border-blue-500 focus:ring-blue-500 dark:bg-neutral-700 dark:border-neutral-700 dark:text-neutral-200" placeholder="0.00">
+                            <div class="absolute inset-y-0 inset-s-0 flex items-center pointer-events-none ps-3">
+                                <span class="text-gray-500 dark:text-neutral-400">$</span>
+                            </div>
+                        </div>
                         <button type="button" class="rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-700" onclick="removeBudgetRow(this)">X</button>
                     </div>
                 @endforeach
@@ -146,7 +159,12 @@
                     <select name="contract_budgets[${index}][chartAccount_id]" class="budget-account hidden">
                         <option value=""></option>${options}
                     </select>
-                    <input type="text" inputmode="decimal" name="contract_budgets[${index}][budget]" class="budget-amount w-full rounded-lg border border-gray-200 bg-white px-3 py-3 text-sm text-gray-800 focus:border-blue-500 focus:ring-blue-500 dark:bg-neutral-700 dark:border-neutral-700 dark:text-neutral-200" placeholder="{{ __('Budget') }}">
+                    <div class="relative">
+                        <input type="text" inputmode="decimal" name="contract_budgets[${index}][budget]" class="budget-amount w-full rounded-lg border border-gray-200 bg-white py-3 ps-9 pe-3 text-sm text-gray-800 focus:border-blue-500 focus:ring-blue-500 dark:bg-neutral-700 dark:border-neutral-700 dark:text-neutral-200" placeholder="0.00">
+                        <div class="absolute inset-y-0 inset-s-0 flex items-center pointer-events-none ps-3">
+                            <span class="text-gray-500 dark:text-neutral-400">$</span>
+                        </div>
+                    </div>
                     <button type="button" class="rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-700" onclick="removeBudgetRow(this)">X</button>
                 </div>
             `);
@@ -193,7 +211,7 @@
         }
 
         function formatMoneyForInput(value) {
-            return '$' + Number(value || 0).toLocaleString('es-CO', {
+            return Number(value || 0).toLocaleString('es-CO', {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
             });
@@ -203,8 +221,23 @@
             return Number(normalizeMoneyInput(value)) || 0;
         }
 
-        function normalizeMoneyInput(value) {
+        function sanitizeMoneyInput(value) {
             value = String(value || '').replace(/[^0-9,.]/g, '');
+            const separatorIndex = value.search(/[,.]/);
+
+            if (separatorIndex === -1) {
+                return value;
+            }
+
+            const integerPart = value.slice(0, separatorIndex).replace(/[,.]/g, '');
+            const separator = value[separatorIndex];
+            const decimalPart = value.slice(separatorIndex + 1).replace(/[,.]/g, '').substring(0, 2);
+
+            return `${integerPart}${separator}${decimalPart}`;
+        }
+
+        function normalizeMoneyInput(value) {
+            value = sanitizeMoneyInput(value);
             const lastComma = value.lastIndexOf(',');
             const lastDot = value.lastIndexOf('.');
 
@@ -233,12 +266,7 @@
             }
 
             const [integerPart, fractionPart] = parts;
-
-            if (fractionPart.length === 3 && integerPart.length <= 3) {
-                return value.replaceAll(separator, '');
-            }
-
-            return value.replace(separator, '.');
+            return `${integerPart}.${fractionPart.substring(0, 2)}`;
         }
 
         function updateCompensationFromBudgets() {
@@ -253,6 +281,7 @@
 
             document.getElementById('budgetRows')?.addEventListener('input', function(event) {
                 if (event.target.classList.contains('budget-amount')) {
+                    event.target.value = sanitizeMoneyInput(event.target.value);
                     updateCompensationFromBudgets();
                 }
             });

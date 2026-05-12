@@ -263,7 +263,15 @@
             @enderror
         </div>
 
-        <flux:input label="{{__('Amount')}}"  id="amount" name="amount" :value="old('amount')" />
+        <div data-flux-field>
+            <label for="amount" class="block text-base text-gray-700 dark:text-neutral-200">{{ __('Amount') }}</label>
+            <div class="relative">
+                <input type="text" id="amount" name="amount" class="w-full rounded-lg border border-gray-200 bg-white py-3 ps-9 pe-3 text-sm text-gray-800 focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none dark:bg-neutral-700 dark:border-neutral-700 dark:text-neutral-200" value="{{ old('amount') }}" placeholder="0.00">
+                <div class="absolute inset-y-0 inset-s-0 flex items-center pointer-events-none ps-3">
+                    <span class="text-gray-500 dark:text-neutral-400">$</span>
+                </div>
+            </div>
+        </div>
         <flux:input label="{{__('Notes')}}" id="description" name="description" :value="old('description')"  />
         <flux:input label="{{__('Attachment Link')}}" id="attachment_link" name="attachment_link" :value="old('attachment_link')" />
         @error('attachment_link')
@@ -493,7 +501,7 @@
             const input = document.getElementById('amount');
 
             input.addEventListener('input', function() {
-                this.value = this.value.replace(/[^0-9,.]/g, '');
+                this.value = sanitizePayMoneyInput(this.value);
             });
             input.closest('form').addEventListener('submit', function() {
                 input.value = normalizePayMoneyInput(input.value);
@@ -550,7 +558,12 @@
                                     </span>
                                 </label>
                             </div>
-                            <input type="text" inputmode="decimal" class="allocation-amount w-full rounded-lg border border-gray-200 bg-white px-3 py-3 text-sm text-gray-800 dark:bg-neutral-700 dark:border-neutral-700 dark:text-neutral-200" name="payment_allocations[${index}][amount]" value="${value}">
+                            <div class="relative">
+                                <input type="text" inputmode="decimal" class="allocation-amount w-full rounded-lg border border-gray-200 bg-white py-3 ps-9 pe-3 text-sm text-gray-800 dark:bg-neutral-700 dark:border-neutral-700 dark:text-neutral-200" name="payment_allocations[${index}][amount]" value="${value}" placeholder="0.00">
+                                <div class="absolute inset-y-0 inset-s-0 flex items-center pointer-events-none ps-3">
+                                    <span class="text-gray-500 dark:text-neutral-400">$</span>
+                                </div>
+                            </div>
                         </div>
                         <input type="hidden" name="payment_allocations[${index}][chartAccount_id]" value="${escapePayHtml(budget.chartAccount_id)}">
                     </div>
@@ -573,6 +586,7 @@
                 const input = row.querySelector('.allocation-amount');
                 const remainingEl = row.querySelector('.budget-remaining');
                 const remaining = parseFloat(remainingEl.dataset.remaining || '0');
+                input.value = sanitizePayMoneyInput(input.value);
                 const value = checked ? parsePayMoneyInput(input.value) : 0;
 
                 input.disabled = !checked;
@@ -605,8 +619,23 @@
             return Number(normalizePayMoneyInput(value)) || 0;
         }
 
-        function normalizePayMoneyInput(value) {
+        function sanitizePayMoneyInput(value) {
             value = String(value || '').replace(/[^0-9,.]/g, '');
+            const separatorIndex = value.search(/[,.]/);
+
+            if (separatorIndex === -1) {
+                return value;
+            }
+
+            const integerPart = value.slice(0, separatorIndex).replace(/[,.]/g, '');
+            const separator = value[separatorIndex];
+            const decimalPart = value.slice(separatorIndex + 1).replace(/[,.]/g, '').substring(0, 2);
+
+            return `${integerPart}${separator}${decimalPart}`;
+        }
+
+        function normalizePayMoneyInput(value) {
+            value = sanitizePayMoneyInput(value);
             const lastComma = value.lastIndexOf(',');
             const lastDot = value.lastIndexOf('.');
 
@@ -635,12 +664,7 @@
             }
 
             const [integerPart, fractionPart] = parts;
-
-            if (fractionPart.length === 3 && integerPart.length <= 3) {
-                return value.replaceAll(separator, '');
-            }
-
-            return value.replace(separator, '.');
+            return `${integerPart}.${fractionPart.substring(0, 2)}`;
         }
 
         function escapePayHtml(str) {
