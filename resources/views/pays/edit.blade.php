@@ -408,33 +408,13 @@
             const input = document.getElementById('amount');
 
             input.addEventListener('input', function() {
-                let value = this.value;
-
-                // Quitar todo excepto números y punto
-                value = value.replace(/[^0-9,.]/g, '');
-
-                // La coma es decimal; el punto siempre se trata como miles.
-                const hasDecimal = value.includes(',');
-                const parts = value.split(',');
-                let integerPart = parts[0].replace(/[.,]/g, '').replace(/^0+(?=\d)/, '') || '0';
-                let decimalPart = parts.slice(1).join('').replace(/[.,]/g, '');
-
-                // Limitar decimales a 2
-                decimalPart = decimalPart.substring(0, 2);
-
-                // Formatear la parte entera con separadores de miles
-                integerPart = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-
-                // Unir entero y decimal solo si hay decimal
-                if (hasDecimal) {
-                    this.value = `$${integerPart},${decimalPart}`;
-                } else {
-                    this.value = `$${integerPart}`;
-                }
+                this.value = this.value.replace(/[^0-9,.]/g, '');
             });
-            // Limpiar formato antes de enviar el formulario
             input.closest('form').addEventListener('submit', function() {
-                input.value = input.value.replace(/\$/g, '').replace(/\./g, '').replace(',', '.');
+                input.value = normalizePayMoneyInput(input.value);
+                document.querySelectorAll('.allocation-amount').forEach((allocationInput) => {
+                    allocationInput.value = normalizePayMoneyInput(allocationInput.value);
+                });
             });
         });
 
@@ -494,7 +474,7 @@
                                     </span>
                                 </label>
                             </div>
-                            <input type="number" min="0" step="0.01" inputmode="decimal" class="allocation-amount w-full rounded-lg border border-gray-200 bg-white px-3 py-3 text-sm text-gray-800 dark:bg-neutral-700 dark:border-neutral-700 dark:text-neutral-200" name="payment_allocations[${index}][amount]" value="${value}">
+                            <input type="text" inputmode="decimal" class="allocation-amount w-full rounded-lg border border-gray-200 bg-white px-3 py-3 text-sm text-gray-800 dark:bg-neutral-700 dark:border-neutral-700 dark:text-neutral-200" name="payment_allocations[${index}][amount]" value="${value}">
                         </div>
                         <input type="hidden" name="payment_allocations[${index}][chartAccount_id]" value="${escapePayHtml(budget.chartAccount_id)}">
                     </div>
@@ -517,7 +497,7 @@
                 const input = row.querySelector('.allocation-amount');
                 const remainingEl = row.querySelector('.budget-remaining');
                 const remaining = parseFloat(remainingEl.dataset.remaining || '0');
-                const value = checked ? parseFloat(input.value || '0') : 0;
+                const value = checked ? parsePayMoneyInput(input.value) : 0;
 
                 input.disabled = !checked;
                 if (!checked) input.value = '';
@@ -540,6 +520,48 @@
 
         function formatMoney(value) {
             return '$' + Number(value || 0).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function parsePayMoneyInput(value) {
+            return Number(normalizePayMoneyInput(value)) || 0;
+        }
+
+        function normalizePayMoneyInput(value) {
+            value = String(value || '').replace(/[^0-9,.]/g, '');
+            const lastComma = value.lastIndexOf(',');
+            const lastDot = value.lastIndexOf('.');
+
+            if (lastComma !== -1 && lastDot !== -1) {
+                const decimalSeparator = lastComma > lastDot ? ',' : '.';
+                const thousandsSeparator = decimalSeparator === ',' ? '.' : ',';
+                return value.replaceAll(thousandsSeparator, '').replace(decimalSeparator, '.');
+            }
+
+            if (lastComma !== -1) {
+                return normalizePaySingleSeparatorMoney(value, ',');
+            }
+
+            if (lastDot !== -1) {
+                return normalizePaySingleSeparatorMoney(value, '.');
+            }
+
+            return value;
+        }
+
+        function normalizePaySingleSeparatorMoney(value, separator) {
+            const parts = value.split(separator);
+
+            if (parts.length > 2) {
+                return value.replaceAll(separator, '');
+            }
+
+            const [integerPart, fractionPart] = parts;
+
+            if (fractionPart.length === 3 && integerPart.length <= 3) {
+                return value.replaceAll(separator, '');
+            }
+
+            return value.replace(separator, '.');
         }
 
         function escapePayHtml(str) {

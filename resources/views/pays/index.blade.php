@@ -79,15 +79,13 @@
                                     <td class="px-4 py-4 text-sm font-medium text-gray-800 dark:text-neutral-200"><flux:badge  :color="$pay->status_color" inset="top bottom">{{ $pay->status_label }}</flux:badge></td>
                                     <td class="px-4 py-4">
                                         <div class="flex flex-wrap justify-center gap-2">
-                                        @if (!in_array($pay->status, [ 1,2]))
-                                            <a href="{{ route('pays.edit', $pay->_id) }}">
-                                                <flux:button
-                                                    size="sm"
-                                                    variant="primary"
-                                                    icon="pencil-square">
-                                                </flux:button>
-                                            </a>
-                                        @endif
+                                        <a href="{{ route('pays.edit', $pay->_id) }}">
+                                            <flux:button
+                                                size="sm"
+                                                variant="primary"
+                                                icon="pencil-square">
+                                            </flux:button>
+                                        </a>
 
                                         <flux:button
                                             size="sm"

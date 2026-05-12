@@ -330,7 +330,7 @@
                             </div>
                         </div>
                         <div>
-                            <input type="number" min="0" step="0.01" inputmode="decimal" name="contract_budgets[${index}][budget]" value="${escapeContractHtml(budget.budget ?? '')}" class="budget-amount w-full rounded-lg border border-gray-200 bg-white px-3 py-3 text-sm text-gray-800 focus:border-blue-500 focus:ring-blue-500 dark:bg-neutral-700 dark:border-neutral-700 dark:text-neutral-200" placeholder="{{ __('Budget') }}">
+                            <input type="text" inputmode="decimal" name="contract_budgets[${index}][budget]" value="${escapeContractHtml(budget.budget ?? '')}" class="budget-amount w-full rounded-lg border border-gray-200 bg-white px-3 py-3 text-sm text-gray-800 focus:border-blue-500 focus:ring-blue-500 dark:bg-neutral-700 dark:border-neutral-700 dark:text-neutral-200" placeholder="{{ __('Budget') }}">
                         </div>
                         <button type="button" class="rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-700" onclick="removeEditBudgetRow(this)">X</button>
                     </div>
@@ -393,24 +393,51 @@
 
             function updateEditCompensationFromBudgets() {
                 const total = Array.from(document.querySelectorAll('#editBudgetRows .budget-amount'))
-                    .reduce((sum, budgetInput) => sum + (parseFloat(budgetInput.value || '0') || 0), 0);
+                    .reduce((sum, budgetInput) => sum + parseContractMoneyInput(budgetInput.value), 0);
 
                 document.getElementById('compensation').value = formatContractMoney(total);
             }
 
-            function formatContractMoneyInput(input) {
-                let value = input.value.replace(/[^0-9,.]/g, '');
-                const hasDecimal = value.includes(',');
-                const parts = value.split(',');
-                let integerPart = parts[0].replace(/[.,]/g, '').replace(/^0+(?=\d)/, '') || '0';
-                let decimalPart = parts.slice(1).join('').replace(/[.,]/g, '').substring(0, 2);
-
-                integerPart = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-                input.value = hasDecimal ? `$${integerPart},${decimalPart}` : `$${integerPart}`;
+            function parseContractMoneyInput(value) {
+                return Number(normalizeContractMoneyValue(value)) || 0;
             }
 
             function normalizeContractMoneyValue(value) {
-                return String(value || '').replace(/\$/g, '').replace(/\./g, '').replace(',', '.');
+                value = String(value || '').replace(/[^0-9,.]/g, '');
+                const lastComma = value.lastIndexOf(',');
+                const lastDot = value.lastIndexOf('.');
+
+                if (lastComma !== -1 && lastDot !== -1) {
+                    const decimalSeparator = lastComma > lastDot ? ',' : '.';
+                    const thousandsSeparator = decimalSeparator === ',' ? '.' : ',';
+                    return value.replaceAll(thousandsSeparator, '').replace(decimalSeparator, '.');
+                }
+
+                if (lastComma !== -1) {
+                    return normalizeContractSingleSeparatorMoney(value, ',');
+                }
+
+                if (lastDot !== -1) {
+                    return normalizeContractSingleSeparatorMoney(value, '.');
+                }
+
+                return value;
+            }
+
+            function normalizeContractSingleSeparatorMoney(value, separator) {
+                const parts = value.split(separator);
+
+                if (parts.length > 2) {
+                    return value.replaceAll(separator, '');
+                }
+
+                const [integerPart, fractionPart] = parts;
+
+                if (fractionPart.length === 3 && integerPart.length <= 3) {
+                    return value.replaceAll(separator, '');
+                }
+
+                return value.replace(separator, '.');
             }
 
             window.openEditModal = function (contract) {
@@ -454,10 +481,6 @@
                     table.search(this.value).draw();
                 });
 
-                const compensationInput = document.getElementById('compensation');
-                compensationInput?.addEventListener('input', function () {
-                    formatContractMoneyInput(this);
-                });
                 document.getElementById('editBudgetRows')?.addEventListener('input', function(event) {
                     if (event.target.classList.contains('budget-amount')) {
                         updateEditCompensationFromBudgets();

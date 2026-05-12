@@ -102,7 +102,7 @@
                                 <option value="{{ $chartAccount->_id }}" {{ ($budget['chartAccount_id'] ?? '') == $chartAccount->_id ? 'selected' : '' }}>{{ $chartAccount->name }}</option>
                             @endforeach
                         </select>
-                        <input type="number" min="0" step="0.01" inputmode="decimal" name="contract_budgets[{{ $index }}][budget]" value="{{ $budget['budget'] ?? '' }}" class="budget-amount w-full rounded-lg border border-gray-200 bg-white px-3 py-3 text-sm text-gray-800 focus:border-blue-500 focus:ring-blue-500 dark:bg-neutral-700 dark:border-neutral-700 dark:text-neutral-200" placeholder="{{ __('Budget') }}">
+                        <input type="text" inputmode="decimal" name="contract_budgets[{{ $index }}][budget]" value="{{ $budget['budget'] ?? '' }}" class="budget-amount w-full rounded-lg border border-gray-200 bg-white px-3 py-3 text-sm text-gray-800 focus:border-blue-500 focus:ring-blue-500 dark:bg-neutral-700 dark:border-neutral-700 dark:text-neutral-200" placeholder="{{ __('Budget') }}">
                         <button type="button" class="rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-700" onclick="removeBudgetRow(this)">X</button>
                     </div>
                 @endforeach
@@ -146,7 +146,7 @@
                     <select name="contract_budgets[${index}][chartAccount_id]" class="budget-account hidden">
                         <option value=""></option>${options}
                     </select>
-                    <input type="number" min="0" step="0.01" inputmode="decimal" name="contract_budgets[${index}][budget]" class="budget-amount w-full rounded-lg border border-gray-200 bg-white px-3 py-3 text-sm text-gray-800 focus:border-blue-500 focus:ring-blue-500 dark:bg-neutral-700 dark:border-neutral-700 dark:text-neutral-200" placeholder="{{ __('Budget') }}">
+                    <input type="text" inputmode="decimal" name="contract_budgets[${index}][budget]" class="budget-amount w-full rounded-lg border border-gray-200 bg-white px-3 py-3 text-sm text-gray-800 focus:border-blue-500 focus:ring-blue-500 dark:bg-neutral-700 dark:border-neutral-700 dark:text-neutral-200" placeholder="{{ __('Budget') }}">
                     <button type="button" class="rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-700" onclick="removeBudgetRow(this)">X</button>
                 </div>
             `);
@@ -199,9 +199,51 @@
             });
         }
 
+        function parseMoneyInput(value) {
+            return Number(normalizeMoneyInput(value)) || 0;
+        }
+
+        function normalizeMoneyInput(value) {
+            value = String(value || '').replace(/[^0-9,.]/g, '');
+            const lastComma = value.lastIndexOf(',');
+            const lastDot = value.lastIndexOf('.');
+
+            if (lastComma !== -1 && lastDot !== -1) {
+                const decimalSeparator = lastComma > lastDot ? ',' : '.';
+                const thousandsSeparator = decimalSeparator === ',' ? '.' : ',';
+                return value.replaceAll(thousandsSeparator, '').replace(decimalSeparator, '.');
+            }
+
+            if (lastComma !== -1) {
+                return normalizeSingleSeparatorMoney(value, ',');
+            }
+
+            if (lastDot !== -1) {
+                return normalizeSingleSeparatorMoney(value, '.');
+            }
+
+            return value;
+        }
+
+        function normalizeSingleSeparatorMoney(value, separator) {
+            const parts = value.split(separator);
+
+            if (parts.length > 2) {
+                return value.replaceAll(separator, '');
+            }
+
+            const [integerPart, fractionPart] = parts;
+
+            if (fractionPart.length === 3 && integerPart.length <= 3) {
+                return value.replaceAll(separator, '');
+            }
+
+            return value.replace(separator, '.');
+        }
+
         function updateCompensationFromBudgets() {
             const total = Array.from(document.querySelectorAll('#budgetRows .budget-amount'))
-                .reduce((sum, budgetInput) => sum + (parseFloat(budgetInput.value || '0') || 0), 0);
+                .reduce((sum, budgetInput) => sum + parseMoneyInput(budgetInput.value), 0);
 
             document.getElementById('compensation').value = formatMoneyForInput(total);
         }
@@ -243,9 +285,9 @@
             });
             // Limpiar formato antes de enviar el formulario
             input.closest('form').addEventListener('submit', function() {
-                input.value = input.value.replace(/\$/g, '').replace(/\./g, '').replace(',', '.');
+                input.value = normalizeMoneyInput(input.value);
                 document.querySelectorAll('.budget-amount').forEach((budgetInput) => {
-                    budgetInput.value = budgetInput.value.replace(/\$/g, '').replace(/\./g, '').replace(',', '.');
+                    budgetInput.value = normalizeMoneyInput(budgetInput.value);
                 });
             });
         });
