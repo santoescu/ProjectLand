@@ -540,19 +540,10 @@ class PayController extends Controller
 
     private function contractsForFront(?string $excludePayId = null)
     {
-        $currentContractId = $excludePayId ? (Pay::find($excludePayId)?->contract_id ?? null) : null;
-        $activeProjectIds = Project::active()
-            ->get()
-            ->map(fn ($project) => (string) $project->_id)
-            ->all();
         $chartAccountNames = ChartAccount::all()
             ->mapWithKeys(fn ($chartAccount) => [(string) $chartAccount->_id => $chartAccount->name]);
 
         return Contract::all()
-            ->filter(function ($contract) use ($activeProjectIds, $currentContractId) {
-                return in_array((string) ($contract->project_id ?? ''), $activeProjectIds, true)
-                    || (filled($currentContractId) && (string) $contract->_id === (string) $currentContractId);
-            })
             ->map(function ($contract) use ($chartAccountNames, $excludePayId) {
             $budgets = collect($contract->contract_budgets ?? [])->map(function ($budget) use ($contract, $chartAccountNames, $excludePayId) {
                 $chartAccountId = (string) ($budget['chartAccount_id'] ?? '');

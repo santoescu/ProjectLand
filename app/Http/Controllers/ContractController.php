@@ -26,13 +26,6 @@ class ContractController extends Controller
 
         if (filled($effectiveProjectId)) {
             $query->where('project_id', $effectiveProjectId);
-        } else {
-            $activeProjectIds = Project::active()
-                ->get()
-                ->map(fn ($project) => (string) $project->_id)
-                ->all();
-
-            $query->whereIn('project_id', $activeProjectIds);
         }
 
         $contracts = $query->with('contractor', 'project')->get();
