@@ -55,9 +55,14 @@
                                         <h2 class="text-lg font-semibold text-gray-800 dark:text-white">
                                             {{ $project->name }}
                                         </h2>
-                                        <span class="rounded-md bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-700 dark:bg-neutral-700 dark:text-neutral-200">
-                                            {{ trans_choice(':count subproject|:count subprojects', count($subprojects), ['count' => count($subprojects)]) }}
-                                        </span>
+                                        <div class="flex flex-wrap justify-end gap-2">
+                                            <span class="rounded-md px-2.5 py-1 text-xs font-medium {{ $project->status_badge_classes }}">
+                                                {{ $project->status_label }}
+                                            </span>
+                                            <span class="rounded-md bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-700 dark:bg-neutral-700 dark:text-neutral-200">
+                                                {{ trans_choice(':count subproject|:count subprojects', count($subprojects), ['count' => count($subprojects)]) }}
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
 

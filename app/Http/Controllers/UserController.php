@@ -19,7 +19,7 @@ class UserController extends Controller
 
         $query = User::query();
 
-        $users = $query->paginate(10);
+        $users = $query->get();
 
         return view('users.index', compact('users'));
     }

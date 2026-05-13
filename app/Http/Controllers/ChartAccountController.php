@@ -13,7 +13,7 @@ class ChartAccountController extends Controller
     {
         $query = ChartAccount::query();
 
-        $chartAccounts = $query->paginate(100);
+        $chartAccounts = $query->get();
 
         return view('chartAccounts.index', compact('chartAccounts'));
     }

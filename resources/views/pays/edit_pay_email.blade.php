@@ -36,6 +36,8 @@
         .contract-field .hs-dropdown{ order: 3; }
 
         .contract-field .contract-select{ order: 4; }
+
+        .contract-field .contract-detail-button{ order: 5; }
     </style>
     @php
         $userRole = $user->role ?? null;
@@ -235,6 +237,13 @@
                 @error('contract_id')
                 <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                 @enderror
+                <button type="button"
+                        id="viewContractDetailButton"
+                        class="contract-detail-button mt-2 inline-flex items-center justify-center gap-x-2 self-start rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-800 shadow-2xs hover:bg-gray-50 focus:outline-hidden disabled:opacity-50 disabled:pointer-events-none dark:bg-neutral-800 dark:border-neutral-700 dark:text-white dark:hover:bg-neutral-700"
+                        onclick="openSelectedContractDetailModal()"
+                        disabled>
+                    {{ __('View contract') }}
+                </button>
             </div>
         </div>
         <div id="contractBudgetAllocations" class="hidden space-y-3">
@@ -337,6 +346,7 @@
         </div>
 
     </form>
+    @include('pays.partials.contract-detail-modal')
     <div id="hs-vertically-centered-modal" class="hs-overlay hidden size-full fixed top-0 start-0 z-80 overflow-x-hidden overflow-y-auto pointer-events-none" role="dialog" tabindex="-1" aria-labelledby="hs-vertically-centered-modal-label">
         <div class="hs-overlay-open:mt-7 hs-overlay-open:opacity-100 hs-overlay-open:duration-500 mt-0 opacity-0 ease-out transition-all sm:max-w-lg sm:w-full m-3 sm:mx-auto min-h-[calc(100%-56px)] flex items-center">
             <div class="w-full flex flex-col bg-white border border-gray-200 shadow-2xs rounded-xl pointer-events-auto dark:bg-neutral-800 dark:border-neutral-700 dark:shadow-neutral-700/70">
@@ -391,6 +401,9 @@
                     document.getElementById('project_id')?.addEventListener('change', () => {
                         this.onContractorChange(this.currentContractorId);
                     });
+                    document.getElementById('subproject')?.addEventListener('change', () => {
+                        this.onContractorChange(this.currentContractorId);
+                    });
 
                     if (initialContractorId) {
                         this.onContractorChange(initialContractorId, initialContractId);
@@ -421,10 +434,12 @@
 
                 filteredContracts(contractorId) {
                     const projectId = document.getElementById('project_id')?.value ?? '';
+                    const subproject = document.getElementById('subproject')?.value ?? '';
 
                     return this.contracts.filter(contract =>
                         contract.contractor_id === contractorId &&
-                        (!projectId || contract.project_id === projectId)
+                        (!projectId || contract.project_id === projectId) &&
+                        (!subproject || contract.subproject === subproject)
                     );
                 },
 
@@ -516,6 +531,8 @@
         });
 
         function renderContractBudgetAllocations(contractId) {
+            setContractDetailButtonEnabled(contractId);
+
             const section = document.getElementById('contractBudgetAllocations');
             const rows = document.getElementById('contractBudgetRows');
             const legacy = document.getElementById('legacyChartAccountField');
@@ -613,7 +630,7 @@
         }
 
         function formatMoney(value) {
-            return '$' + Number(value || 0).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            return '$' + Number(value || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         }
 
         function parsePayMoneyInput(value) {
@@ -697,7 +714,7 @@
                     tr.innerHTML = `
                 <td class="border px-2 py-1 text-base text-gray-700 dark:text-neutral-200">${history.user_name}</td>
                 <td class="border px-2 py-1 text-base text-gray-700 dark:text-neutral-200">${history.action}</td>
-                <td class="border px-2 py-1 text-base text-gray-700 dark:text-neutral-200">${new Date(history.created_at).toLocaleString()}</td>
+                <td class="border px-2 py-1 text-base text-gray-700 dark:text-neutral-200">${formatUsDateTime(history.created_at)}</td>
             `;
                     tbody.appendChild(tr);
                 });
@@ -706,6 +723,19 @@
                 tr.innerHTML = `<td colspan="4" class="border px-2 py-1 text-center">No hay historial</td>`;
                 tbody.appendChild(tr);
             }
+        }
+
+        function formatUsDateTime(value) {
+            if (!value) return '';
+
+            return new Date(value).toLocaleString('en-US', {
+                month: '2-digit',
+                day: '2-digit',
+                year: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true,
+            });
         }
     </script>
     <script>

@@ -51,23 +51,12 @@
                                         </td>
                                     </tr>
                                 @empty
-                                    <tr>
-                                        <td></td>
-                                        <td class="px-6 py-4 text-center text-gray-500">
-                                            {{ __('There are no registered :name.', ['name'=>__('budget codes')]) }}
-                                        </td>
-                                        <td></td>
-                                    </tr>
                                 @endforelse
 
 
                                 </tbody>
                             </table>
                         </div>
-                        <div class="py-1 px-4">
-                            {{ $chartAccounts->links() }}
-                        </div>
-
                     </div>
                 </div>
             </div>
@@ -219,24 +208,12 @@
 
     </script>
 
+    @include('partials.datatable-pagination')
+
     @push('scripts')
         <script>
             $(document).ready(function () {
-                // Inicializamos DataTable
-                let table = $('#chartAccountsTable').DataTable({
-                    dom: '',
-                    pageLength: 100,
-                    language: {
-                        zeroRecords: "{{__("No matching records found")}}",
-
-                    }
-
-                });
-
-                // Conectar tu input Preline al DataTable
-                $('#hs-table-with-pagination-search').on('keyup', function () {
-                    table.search(this.value).draw();
-                });
+                let table = initWorkflowDataTable('#chartAccountsTable', '#hs-table-with-pagination-search');
                 $("#editchartAccountForm").on("submit", function (e) {
                     e.preventDefault(); // evita reload
 

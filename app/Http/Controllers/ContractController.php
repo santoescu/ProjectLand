@@ -26,11 +26,18 @@ class ContractController extends Controller
 
         if (filled($effectiveProjectId)) {
             $query->where('project_id', $effectiveProjectId);
+        } else {
+            $activeProjectIds = Project::active()
+                ->get()
+                ->map(fn ($project) => (string) $project->_id)
+                ->all();
+
+            $query->whereIn('project_id', $activeProjectIds);
         }
 
-        $contracts = $query->with('contractor', 'project')->paginate(10);
+        $contracts = $query->with('contractor', 'project')->get();
         $contractors = Contractor::all();
-        $projects = Project::all();
+        $projects = Project::activeOrId($effectiveProjectId)->orderBy('name')->get();
         $chartAccounts = ChartAccount::all();
         return view('contracts.index', compact('contracts', 'contractors', 'projects', 'chartAccounts', 'selectedProject', 'effectiveProjectId'));
     }
@@ -40,8 +47,17 @@ class ContractController extends Controller
      */
     public function create()
     {
+        if ($this->selectedProjectIsInactive()) {
+            session()->flash('toast', [
+                'type' => 'warning',
+                'message' => __('Inactive projects cannot be used to create new records.'),
+            ]);
+
+            return redirect()->route('contracts.index');
+        }
+
         $contractors = Contractor::all();
-        $projects = Project::all();
+        $projects = Project::active()->orderBy('name')->get();
         $chartAccounts = ChartAccount::all();
         $selectedProject = session('selected_project');
         $effectiveProjectId = data_get($selectedProject, 'id');
@@ -51,6 +67,21 @@ class ContractController extends Controller
     public function show($id)
     {
         $contract = Contract::with('contractor', 'project')->findOrFail($id);
+        $detailData = $this->paymentDetailData($contract);
+
+        return view('contracts.show', array_merge(['contract' => $contract], $detailData));
+    }
+
+    public function paymentDetailTable($id)
+    {
+        $contract = Contract::with('contractor', 'project')->findOrFail($id);
+        $detailData = $this->paymentDetailData($contract);
+
+        return view('contracts.partials.payment-detail-table', array_merge(['contract' => $contract], $detailData));
+    }
+
+    private function paymentDetailData(Contract $contract): array
+    {
         $chartAccounts = ChartAccount::all()->keyBy(fn ($chartAccount) => (string) $chartAccount->_id);
         $payments = Pay::where('contract_id', (string) $contract->_id)
             ->where('status', 2)
@@ -89,7 +120,7 @@ class ContractController extends Controller
             ];
         })->values();
 
-        return view('contracts.show', compact('contract', 'payments', 'budgetRows'));
+        return compact('payments', 'budgetRows');
     }
 
     /**
@@ -155,12 +186,13 @@ class ContractController extends Controller
             'name' => 'required|string|max:255',
             'contractor_id' => 'required|string',
             'project_id' => 'required|string',
+            'subproject' => 'nullable|string|max:255',
             'contract_budgets' => 'required|array|min:1',
             'contract_budgets.*.chartAccount_id' => 'required|string|distinct',
             'contract_budgets.*.budget' => 'required|numeric|min:0',
         ]);
 
-        if (!Project::find($data['project_id'])) {
+        if (!Project::active()->find($data['project_id'])) {
             throw ValidationException::withMessages([
                 'project_id' => __('The selected project is invalid.'),
             ]);
@@ -184,6 +216,19 @@ class ContractController extends Controller
         $data['compensation'] = collect($data['contract_budgets'])->sum('budget');
 
         return $data;
+    }
+
+    private function selectedProjectIsInactive(): bool
+    {
+        $selectedProjectId = data_get(session('selected_project'), 'id');
+
+        if (blank($selectedProjectId)) {
+            return false;
+        }
+
+        $project = Project::find($selectedProjectId);
+
+        return $project && !$project->is_active;
     }
 
     private function syncContractBudgetUsage(string $contractId): void

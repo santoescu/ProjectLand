@@ -29,13 +29,15 @@ Route::get('dashboard', function () {
 Route::post('dashboard/select-project', function () {
     request()->validate([
         'project_id' => 'required',
-        'project_name' => 'required|string|max:255',
     ]);
+
+    $project = Project::findOrFail(request('project_id'));
 
     session([
         'selected_project' => [
-            'id' => request('project_id'),
-            'name' => request('project_name'),
+            'id' => (string) $project->_id,
+            'name' => $project->name,
+            'status' => $project->status,
         ],
     ]);
 
@@ -64,6 +66,8 @@ Route::middleware(['auth'])->group(function () {
     });
 
     Route::middleware(['role:,director,accounting_assistant,project_manager,admin'])->group(function () {
+        Route::get('contracts/{id}/payment-detail-table', [ContractController::class, 'paymentDetailTable'])
+            ->name('contracts.paymentDetailTable');
         Route::resource('pays', PayController::class);
     });
 

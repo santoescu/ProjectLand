@@ -25,6 +25,7 @@
 
                                 <th scope="col" class="px-6 py-3 text-start text-xs font-medium text-gray-500 uppercase dark:text-neutral-500">{{__('Name')}}</th>
                                 <th scope="col" class="px-6 py-3 text-start text-xs font-medium text-gray-500 uppercase dark:text-neutral-500">{{__('Subproject')}}</th>
+                                <th scope="col" class="px-6 py-3 text-start text-xs font-medium text-gray-500 uppercase dark:text-neutral-500">{{__('Status')}}</th>
                                 <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase dark:text-neutral-500">{{__('Actions')}}</th>
                             </tr>
                             </thead>
@@ -33,6 +34,11 @@
                                 <tr >
                                     <td class="px-4 py-4 text-sm font-medium text-gray-800 break-words dark:text-neutral-200">{{ $project->name }}</td>
                                     <td class="px-4 py-4 text-sm font-medium text-gray-800 break-words dark:text-neutral-200">{{ $project->name_sub_project }}</td>
+                                    <td class="px-4 py-4 text-sm font-medium">
+                                        <span class="inline-flex items-center rounded-md px-2.5 py-1 text-xs font-medium {{ $project->status_badge_classes }}">
+                                            {{ $project->status_label }}
+                                        </span>
+                                    </td>
                                     <td class="px-6 py-4 flex justify-center gap-2">
                                         <!-- Botón Editar -->
                                         <flux:button
@@ -45,22 +51,12 @@
                                     </td>
                                 </tr>
                             @empty
-                                <tr>
-                                    <td class="px-6 py-4 text-center text-gray-500">
-                                        {{ __('There are no registered :name.', ['name'=>__('projects')]) }}
-                                    </td>
-                                    <td></td>
-                                </tr>
                             @endforelse
 
 
                             </tbody>
                         </table>
                     </div>
-                    <div class="py-1 px-4">
-                        {{ $projects->links() }}
-                    </div>
-
                 </div>
             </div>
         </div>
@@ -85,7 +81,11 @@
                 @csrf
                 @method('PUT')
                 <flux:input id="name" label="{{__('Name')}}" name="name"  />
-                <label   class="block text-base">
+                <flux:select id="status" label="{{ __('Status') }}" name="status">
+                    <option value="active">{{ __('Active') }}</option>
+                    <option value="inactive">{{ __('Inactive') }}</option>
+                </flux:select>
+                <label class="block text-base text-gray-700 dark:text-neutral-200">
                     {{ __('Subprojects') }}
                 </label>
                 <!-- Input Group -->
@@ -179,6 +179,7 @@
                 HSOverlay.open('#edit-project');
             }
             document.getElementById('name').value = project.name;
+            document.getElementById('status').value = project.status || 'active';
             document.getElementById('editProjectForm').action = `/projects/${project.id}`;
             document.getElementById('deleteProjectForm').action = `/projects/${project.id}` ;
 
@@ -227,23 +228,12 @@
 
     </script>
 
+    @include('partials.datatable-pagination')
+
     @push('scripts')
         <script>
             $(document).ready(function () {
-                // Inicializamos DataTable
-                let table = $('#projectsTable').DataTable({
-                    dom: '',
-                    language: {
-                        zeroRecords: "{{__("No matching records found")}}",
-
-                    }
-
-                });
-
-                // Conectar tu input Preline al DataTable
-                $('#hs-table-with-pagination-search').on('keyup', function () {
-                    table.search(this.value).draw();
-                });
+                let table = initWorkflowDataTable('#projectsTable', '#hs-table-with-pagination-search');
                 $("#editProjectForm").on("submit", function (e) {
                     e.preventDefault(); // evita reload
 

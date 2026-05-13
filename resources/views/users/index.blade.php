@@ -49,23 +49,12 @@
                                     </td>
                                 </tr>
                             @empty
-                                <tr>
-                                    <td></td>
-                                    <td colspan="2" class="px-6 py-4 text-center text-gray-500">
-                                        {{__('There are no registered :name.',['name'=>__('users')])}}
-                                    </td>
-                                    <td></td>
-                                </tr>
                             @endforelse
 
 
                             </tbody>
                         </table>
                     </div>
-                    <div class="py-1 px-4">
-                        {{ $users->links() }}
-                    </div>
-
                 </div>
             </div>
         </div>
@@ -170,24 +159,12 @@
 
     </script>
 
+    @include('partials.datatable-pagination')
+
     @push('scripts')
         <script>
             $(document).ready(function () {
-                // Inicializamos DataTable
-                let table = $('#usersTable').DataTable({
-                    dom: '',
-                    language: {
-
-                        zeroRecords: "{{__("No matching records found")}}",
-
-                    }
-
-                });
-
-                // Conectar tu input Preline al DataTable
-                $('#hs-table-with-pagination-search').on('keyup', function () {
-                    table.search(this.value).draw();
-                });
+                let table = initWorkflowDataTable('#usersTable', '#hs-table-with-pagination-search');
                 $("#editUserForm").on("submit", function (e) {
                     e.preventDefault(); // evita reload
 

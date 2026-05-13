@@ -77,7 +77,7 @@
         @if(!blank($pay->subproject ?? null))
             <p><strong>{{ __('Subproject') }}</strong> {{ $pay->subproject }}</p>
         @endif
-        <p><strong>{{__('Amount')}}</strong> ${{ number_format($pay->amount, 2, ',', '.') }}</p>
+        <p><strong>{{__('Amount')}}</strong> ${{ number_format($pay->amount, 2, '.', ',') }}</p>
         <p><strong>{{__('Vendors')}}</strong> {{ $pay->contractor->company_name ?? '' }}</p>
         <p><strong>{{__('Budget Code')}}:</strong> {{ $pay->chartAccount->name ?? '' }}</p>
         <a href="{{ route('pays.updatePay', ['id' => $pay->id, 'user_id' => $user->id]) }}" class="button">{{ __("View") }}</a>

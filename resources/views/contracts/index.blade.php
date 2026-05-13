@@ -3,14 +3,37 @@
         'title' => __('Contracts'),
         'subheading' => __('Management of registered :name',['name'=> __('contracts')])
     ])
+    <style>
+        .subproject-field{
+            display:flex;
+            flex-direction:column;
+            gap:.5rem;
+        }
+
+        .subproject-field .sp-label{ order: 1; }
+
+        .subproject-field .hs-select{ order: 2; }
+
+        .subproject-field .hs-dropdown{ order: 3; }
+
+        .subproject-field .sp-select{ order: 4; }
+    </style>
     @php
         $userRole = Auth::user()->role;
         $userId = Auth::id();
         $lockedProjectId = (string) ($effectiveProjectId ?? '');
+        $selectedProjectIsInactive = filled(data_get($selectedProject ?? null, 'id')) && data_get($selectedProject ?? null, 'status') === 'inactive';
         $chartAccountsForFront = $chartAccounts->map(fn ($chartAccount) => [
             'id' => (string) $chartAccount->_id,
             'name' => $chartAccount->name,
         ])->values();
+        $projectsForFront = $projects->map(function ($project) {
+            return [
+                'id' => (string) $project->_id,
+                'name' => $project->name,
+                'subprojects' => is_array($project->subprojects ?? null) ? $project->subprojects : [],
+            ];
+        })->values();
         $contractSelectConfig = [
             'hasSearch' => true,
             'optionAllowEmptyOption' => true,
@@ -41,9 +64,11 @@
                             <flux:input name="hs-table-with-pagination-search" id="hs-table-with-pagination-search"  icon="magnifying-glass" placeholder="{{__('Search')}}"/>
                         </div>
 
-                        <a href="{{ route('contracts.create') }}">
-                            <flux:button variant="filled" icon="plus">{{__('New')}}</flux:button>
-                        </a>
+                        @unless($selectedProjectIsInactive)
+                            <a href="{{ route('contracts.create') }}">
+                                <flux:button variant="filled" icon="plus">{{__('New')}}</flux:button>
+                            </a>
+                        @endunless
                     </div>
                     <div class="overflow-hidden">
                         <table class="min-w-full table-fixed divide-y divide-gray-200 dark:divide-neutral-700"  id="contractsTable">
@@ -53,6 +78,7 @@
                                 <th scope="col" class="px-6 py-3 text-start text-xs font-medium text-gray-500 uppercase dark:text-neutral-500">{{__('Name')}}</th>
                                 <th scope="col" class="px-6 py-3 text-start text-xs font-medium text-gray-500 uppercase dark:text-neutral-500">{{__('Vendor')}}</th>
                                 <th scope="col" class="px-6 py-3 text-start text-xs font-medium text-gray-500 uppercase dark:text-neutral-500">{{__('Project')}}</th>
+                                <th scope="col" class="px-6 py-3 text-start text-xs font-medium text-gray-500 uppercase dark:text-neutral-500">{{__('Subproject')}}</th>
                                 <th scope="col" class="px-6 py-3 text-start text-xs font-medium text-gray-500 uppercase dark:text-neutral-500">{{__('Compensation')}}</th>
                                 <th scope="col" class="px-6 py-3 text-start text-xs font-medium text-gray-500 uppercase dark:text-neutral-500">{{__('Available budget')}}</th>
                                 <th scope="col" class="px-6 py-3 text-end text-xs font-medium text-gray-500 uppercase dark:text-neutral-500">{{__('Actions')}}</th>
@@ -64,6 +90,7 @@
                                     <td class="px-4 py-4 text-sm font-medium text-gray-800 break-words dark:text-neutral-200">{{ $contract->name }}</td>
                                     <td class="px-4 py-4 text-sm font-medium text-gray-800 break-words dark:text-neutral-200">{{ $contract->contractor->company_name ?? '' }}</td>
                                     <td class="px-4 py-4 text-sm font-medium text-gray-800 break-words dark:text-neutral-200">{{ $contract->project->name ?? '' }}</td>
+                                    <td class="px-4 py-4 text-sm font-medium text-gray-800 break-words dark:text-neutral-200">{{ $contract->subproject ?? '' }}</td>
                                     <td class="px-4 py-4 text-sm font-medium text-gray-800 dark:text-neutral-200">{{ $contract->compensation_formatted }}</td>
                                     <td class="px-4 py-4 text-sm font-medium text-gray-800 dark:text-neutral-200">{{ $contract->remaining_budget_total_formatted }}</td>
                                     <td class="px-6 py-4 flex justify-center gap-2">
@@ -97,27 +124,12 @@
                                     </td>
                                 </tr>
                             @empty
-                                <tr>
-                                    <td ></td>
-
-                                    <td  class="px-6 py-4 text-center text-gray-500">
-                                        {{__('There are no registered :name.',['name'=>__('Contracts')])}}
-                                    </td>
-                                    <td ></td>
-                                    <td ></td>
-                                    <td ></td>
-                                    <td ></td>
-                                </tr>
                             @endforelse
 
 
                             </tbody>
                         </table>
                     </div>
-                    <div class="py-1 px-4">
-                        {{ $contracts->links() }}
-                    </div>
-
                 </div>
             </div>
         </div>
@@ -177,22 +189,50 @@
                     <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                     @enderror
                 </div>
-                <div data-flux-field class="relative {{ $errors->has('project_id') ? 'error' : '' }}">
-                    <label for="project_id" class="block text-base text-gray-700 dark:text-neutral-200">
-                        {{ __('Project') }}
-                    </label>
-                    @if($lockedProjectId)
-                        <input type="hidden" name="project_id" value="{{ $lockedProjectId }}">
-                    @endif
-                    <select id="project_id" name="{{ $lockedProjectId ? '' : 'project_id' }}" class="hidden" data-hs-select='@json($contractSelectConfig)' {{ $lockedProjectId ? 'disabled' : '' }}>
-                        <option value=""></option>
-                        @foreach($projects as $project)
-                            <option value="{{ $project->_id }}" {{ ($lockedProjectId ?: old('project_id')) == $project->_id ? 'selected' : '' }}>{{ $project->name }}</option>
-                        @endforeach
-                    </select>
-                    @error('project_id')
-                    <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
-                    @enderror
+                <div x-data="editContractSubprojectSelect({
+                        projects: @js($projectsForFront),
+                        initialProjectId: @js($lockedProjectId ?: old('project_id')),
+                        initialSubproject: @js(old('subproject'))
+                    })"
+                     x-init="init()">
+
+                    <div data-flux-field class="relative {{ $errors->has('project_id') ? 'error' : '' }}" wire:ignore>
+                        <label for="project_id" class="block text-base text-gray-700 dark:text-neutral-200">
+                            {{ __('Project') }}
+                        </label>
+                        @if($lockedProjectId)
+                            <input type="hidden" name="project_id" value="{{ $lockedProjectId }}">
+                        @endif
+                        <select
+                            id="project_id"
+                            name="{{ $lockedProjectId ? '' : 'project_id' }}"
+                            class="hidden"
+                            data-hs-select='@json($contractSelectConfig)'
+                            @change="onProjectChange($event.target.value)"
+                            {{ $lockedProjectId ? 'disabled' : '' }}>
+                            <option value=""></option>
+                            @foreach($projects as $project)
+                                <option value="{{ $project->_id }}" {{ ($lockedProjectId ?: old('project_id')) == $project->_id ? 'selected' : '' }}>{{ $project->name }}</option>
+                            @endforeach
+                        </select>
+                        @error('project_id')
+                        <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                        @enderror
+                    </div>
+                    <div x-show="showSubproject" x-cloak class="mt-4 subproject-field" wire:ignore>
+                        <label class="block text-base text-gray-700 dark:text-neutral-200 mb-2 sp-label">
+                            {{ __('Subproject') }}
+                        </label>
+
+                        <div id="edit_subproject_toggle" class="w-full sp-toggle"></div>
+
+                        <select id="subproject" name="subproject" class="hidden sp-select" data-hs-select='@json($contractSelectConfig)'>
+                            <option value=""></option>
+                        </select>
+                        @error('subproject')
+                        <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                        @enderror
+                    </div>
                 </div>
                 <div data-flux-field>
                     <label for="compensation" class="block text-base text-gray-700 dark:text-neutral-200">{{ __('Compensation') }}</label>
@@ -208,7 +248,15 @@
                         <label class="block text-base text-gray-700 dark:text-neutral-200">
                             {{ __('Budget Code') }} / {{ __('Budget') }}
                         </label>
-                        <flux:button type="button" variant="filled" icon="plus" onclick="addEditBudgetRow()">{{ __('Add') }}</flux:button>
+                        <button type="button"
+                                onclick="addEditBudgetRow()"
+                                class="py-1.5 px-2 inline-flex items-center gap-x-1 text-xs font-medium rounded-full border border-dashed border-gray-200 bg-white text-gray-800 hover:bg-gray-50 focus:outline-hidden focus:bg-gray-50 disabled:opacity-50 disabled:pointer-events-none dark:bg-neutral-700 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-700 dark:focus:bg-neutral-700">
+                            <svg class="shrink-0 size-3.5" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M5 12h14"></path>
+                                <path d="M12 5v14"></path>
+                            </svg>
+                            {{ __('Add') }}
+                        </button>
                     </div>
                     <div id="editBudgetRows" class="space-y-3"></div>
                 </div>
@@ -306,11 +354,104 @@
 
 
 
+    @include('partials.datatable-pagination')
+
     @push('scripts')
         <script>
             window.contractChartAccountOptions = @json($chartAccountsForFront);
             window.contractBudgetSelectConfig = @json($contractSelectConfig);
             window.lockedContractProjectId = @json($lockedProjectId);
+            window.contractProjectsForFront = @json($projectsForFront);
+
+            document.addEventListener('alpine:init', () => {
+                Alpine.data('editContractSubprojectSelect', ({ projects, initialProjectId, initialSubproject }) => ({
+                    projects,
+                    showSubproject: false,
+
+                    init() {
+                        window.editContractSubprojectSelect = this;
+
+                        if (initialProjectId) {
+                            this.onProjectChange(initialProjectId, initialSubproject);
+                        }
+                    },
+
+                    onProjectChange(projectId, subprojectToSelect = null) {
+                        const project = this.projects.find(item => item.id === projectId);
+                        const subprojects = project && Array.isArray(project.subprojects) ? project.subprojects : [];
+
+                        this.showSubproject = subprojects.length > 0;
+
+                        this.$nextTick(() => {
+                            if (!this.showSubproject) {
+                                this.clearSubproject();
+                                return;
+                            }
+
+                            this.fillSubprojectOptions(subprojects);
+                            this.reInitHSSelect('#subproject');
+                            this.setHSSelectValue('#subproject', subprojectToSelect ?? '');
+                        });
+                    },
+
+                    fillSubprojectOptions(subprojects) {
+                        const el = document.querySelector('#subproject');
+                        if (!el) return;
+
+                        el.innerHTML = '<option value=""></option>' + subprojects
+                            .map(subproject => `<option value="${this.escapeHtml(subproject)}">${this.escapeHtml(subproject)}</option>`)
+                            .join('');
+                    },
+
+                    clearSubproject() {
+                        const el = document.querySelector('#subproject');
+                        if (el) el.value = '';
+                        this.setHSSelectValue('#subproject', '');
+                    },
+
+                    reInitHSSelect(selector) {
+                        if (!window.HSSelect) return;
+
+                        const el = document.querySelector(selector);
+                        if (!el) return;
+
+                        const inst = window.HSSelect.getInstance(el);
+                        if (inst && typeof inst.destroy === 'function') inst.destroy();
+
+                        const toggleHolder = document.querySelector('#edit_subproject_toggle');
+                        if (toggleHolder) toggleHolder.innerHTML = '';
+
+                        new window.HSSelect(el);
+                    },
+
+                    setHSSelectValue(selector, value) {
+                        const el = document.querySelector(selector);
+                        if (!el) return;
+
+                        if (!window.HSSelect) {
+                            el.value = value || '';
+                            return;
+                        }
+
+                        const inst = window.HSSelect.getInstance(el);
+                        if (inst && typeof inst.setValue === 'function') {
+                            inst.setValue(value || '');
+                        } else {
+                            el.value = value || '';
+                            el.dispatchEvent(new Event('change', { bubbles: true }));
+                        }
+                    },
+
+                    escapeHtml(str) {
+                        return String(str)
+                            .replaceAll('&', '&amp;')
+                            .replaceAll('<', '&lt;')
+                            .replaceAll('>', '&gt;')
+                            .replaceAll('"', '&quot;')
+                            .replaceAll("'", '&#039;');
+                    }
+                }));
+            });
 
             window.addEditBudgetRow = function (budget = {}) {
                 const rows = document.getElementById('editBudgetRows');
@@ -398,14 +539,14 @@
             }
 
             function formatContractMoney(value) {
-                return '$' + Number(value || 0).toLocaleString('es-CO', {
+                return '$' + Number(value || 0).toLocaleString('en-US', {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2,
                 });
             }
 
             function formatContractMoneyInput(value) {
-                return Number(value || 0).toLocaleString('es-CO', {
+                return Number(value || 0).toLocaleString('en-US', {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2,
                 });
@@ -485,6 +626,7 @@
                 renderEditBudgets(contract.contract_budgets ?? []);
                 updateEditCompensationFromBudgets();
                 HSSelect.getInstance('#project_id').setValue(projectId);
+                window.editContractSubprojectSelect?.onProjectChange(projectId, contract.subproject || '');
 
 
                 HSSelect.getInstance('#contractor_id').setValue(contract.contractor_id);
@@ -495,21 +637,7 @@
 
 
             $(document).ready(function () {
-                // Inicializamos DataTable
-                let table = $('#contractsTable').DataTable({
-                    dom: '',
-                    language: {
-
-                        zeroRecords: "{{__("No matching records found")}}",
-
-                    }
-
-                });
-
-                // Conectar tu input Preline al DataTable
-                $('#hs-table-with-pagination-search').on('keyup', function () {
-                    table.search(this.value).draw();
-                });
+                let table = initWorkflowDataTable('#contractsTable', '#hs-table-with-pagination-search');
 
                 document.getElementById('editBudgetRows')?.addEventListener('input', function(event) {
                     if (event.target.classList.contains('budget-amount')) {

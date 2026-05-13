@@ -10,7 +10,12 @@
 
         <flux:input label="{{__('Name')}}" name="name" :value="old('name')" />
 
-        <label   class="block text-base">
+        <flux:select label="{{ __('Status') }}" name="status">
+            <option value="active" {{ old('status', 'active') === 'active' ? 'selected' : '' }}>{{ __('Active') }}</option>
+            <option value="inactive" {{ old('status') === 'inactive' ? 'selected' : '' }}>{{ __('Inactive') }}</option>
+        </flux:select>
+
+        <label class="block text-base text-gray-700 dark:text-neutral-200">
             {{ __('Subprojects') }}
         </label>
         <!-- Input Group -->

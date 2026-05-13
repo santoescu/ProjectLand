@@ -74,25 +74,12 @@
                                     </td>
                                 </tr>
                             @empty
-                                <tr>
-                                    <td></td>
-                                    <td></td>
-                                    <td  class="px-6 py-4 text-center text-gray-500">
-                                        {{__('There are no registered :name.',['name'=>__('vendors')])}}
-                                    </td>
-                                    <td></td>
-                                    <td></td>
-                                </tr>
                             @endforelse
 
 
                             </tbody>
                         </table>
                     </div>
-                    <div class="py-1 px-4">
-                        {{ $contractors->links() }}
-                    </div>
-
                 </div>
             </div>
         </div>
@@ -199,24 +186,12 @@
 
     </script>
 
+    @include('partials.datatable-pagination')
+
     @push('scripts')
         <script>
             $(document).ready(function () {
-                // Inicializamos DataTable
-                let table = $('#contractorsTable').DataTable({
-                    dom: '',
-                    language: {
-
-                        zeroRecords: "{{__("No matching records found")}}",
-
-                    }
-
-                });
-
-                // Conectar tu input Preline al DataTable
-                $('#hs-table-with-pagination-search').on('keyup', function () {
-                    table.search(this.value).draw();
-                });
+                let table = initWorkflowDataTable('#contractorsTable', '#hs-table-with-pagination-search');
                 $("#editContractorForm").on("submit", function (e) {
                     e.preventDefault(); // evita reload
 

@@ -15,6 +15,7 @@ class Contract extends Model
         'pay_ids',
         'contractor_id',
         'project_id',
+        'subproject',
         'contract_budgets',
 
     ];
@@ -31,7 +32,7 @@ class Contract extends Model
 
     public function getCompensationFormattedAttribute()
     {
-        return '$' . number_format($this->compensation, 2, ',', '.');
+        return '$' . number_format($this->compensation, 2, '.', ',');
     }
 
     public function getBudgetTotalAttribute()
@@ -41,7 +42,7 @@ class Contract extends Model
 
     public function getBudgetTotalFormattedAttribute()
     {
-        return '$' . number_format($this->budget_total, 2, ',', '.');
+        return '$' . number_format($this->budget_total, 2, '.', ',');
     }
 
     public function getRemainingBudgetTotalAttribute()
@@ -55,7 +56,7 @@ class Contract extends Model
 
     public function getRemainingBudgetTotalFormattedAttribute()
     {
-        return '$' . number_format($this->remaining_budget_total, 2, ',', '.');
+        return '$' . number_format($this->remaining_budget_total, 2, '.', ',');
     }
 
 }

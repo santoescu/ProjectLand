@@ -15,7 +15,7 @@ class ProjectController extends Controller
 
         $query = Project::query();
 
-        $projects = $query->paginate(10);
+        $projects = $query->get();
 
         return view('projects.index', compact('projects'));
     }
@@ -35,12 +35,12 @@ class ProjectController extends Controller
     public function store(Request $request)
     {
 
-        $request->validate([
+        $data = $request->validate([
             'name'   => 'required|string|max:255',
+            'status' => 'required|string|in:active,inactive',
             'subprojects' => 'nullable|array',
             'subprojects.*' => 'nullable|string|max:255',
         ]);
-        $data = $request->all();
 
         if ($request->has('subprojects')) {
 
@@ -65,14 +65,14 @@ class ProjectController extends Controller
     public function update(Request $request, $id)
     {
 
-        $request->validate([
+        $data = $request->validate([
             'name'   => 'required|string|max:255',
+            'status' => 'required|string|in:active,inactive',
             'subprojects' => 'nullable|array',
             'subprojects.*' => 'nullable|string|max:255',
         ]);
 
         $project = Project::findOrFail($id);
-        $data = $request->all();
 
 
         if ($request->has('subprojects')) {

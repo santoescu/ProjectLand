@@ -30,8 +30,8 @@ class PayController extends Controller
         }
 
 
-        $pays = $query->orderBy('created_at', 'desc')->paginate(10);
-        $projects = Project::all();
+        $pays = $query->orderBy('created_at', 'desc')->get();
+        $projects = Project::active()->orderBy('name')->get();
 
         return view('pays.index', compact('projects', 'pays', 'selectedProject', 'effectiveProjectId'));
     }
@@ -40,11 +40,19 @@ class PayController extends Controller
      */
     public function create()
     {
+        if ($this->selectedProjectIsInactive()) {
+            session()->flash('toast', [
+                'type' => 'warning',
+                'message' => __('Inactive projects cannot be used to create new records.'),
+            ]);
+
+            return redirect()->route('pays.index');
+        }
 
         $chartAccounts = ChartAccount::all();
         $contracts = Contract::all();
         $contractsForFront = $this->contractsForFront();
-        $projects = Project::all();
+        $projects = Project::active()->orderBy('name')->get();
         $contractors = Contractor::all();
         $selectedProject = session('selected_project');
         $effectiveProjectId = data_get($selectedProject, 'id');
@@ -68,6 +76,7 @@ class PayController extends Controller
         ]);
 
         $data = $this->applySelectedProject($request->all());
+        $this->ensureActiveProject($data['project_id'] ?? null);
         $data = $this->preparePaymentBudgetData($data);
         $data['contract_id'] = $this->validateContractSelection(
             $data['contractor_id'] ?? null,
@@ -138,6 +147,7 @@ class PayController extends Controller
         if (empty($data['project_id'])) {
             $data['project_id'] = $pay->project_id;
         }
+        $this->ensureActiveProject($data['project_id'] ?? null, $pay->project_id ?? null);
 
         if (empty($data['contractor_id'])) {
             $data['contractor_id'] = $pay->contractor_id;
@@ -191,7 +201,7 @@ class PayController extends Controller
         $chartAccounts = ChartAccount::all();
         $contracts = Contract::all();
         $contractsForFront = $this->contractsForFront((string) $pay->_id);
-        $projects = Project::all();
+        $projects = Project::activeOrId($pay->project_id ?? null)->orderBy('name')->get();
         $contractors = Contractor::all();
         $selectedProject = session('selected_project');
         $effectiveProjectId = data_get($selectedProject, 'id');
@@ -263,7 +273,7 @@ class PayController extends Controller
         $chartAccounts = ChartAccount::all();
         $contracts = Contract::all();
         $contractsForFront = $this->contractsForFront((string) $pay->_id);
-        $projects = Project::all();
+        $projects = Project::activeOrId($pay->project_id ?? null)->orderBy('name')->get();
         $contractors = Contractor::all();
         $selectedProject = session('selected_project');
         $effectiveProjectId = data_get($selectedProject, 'id');
@@ -290,6 +300,7 @@ class PayController extends Controller
         if (empty($data['project_id'])) {
             $data['project_id'] = $pay->project_id;
         }
+        $this->ensureActiveProject($data['project_id'] ?? null, $pay->project_id ?? null);
 
         if (empty($data['contractor_id'])) {
             $data['contractor_id'] = $pay->contractor_id;
@@ -501,12 +512,48 @@ class PayController extends Controller
         return $data;
     }
 
+    private function ensureActiveProject(?string $projectId, ?string $allowedInactiveProjectId = null): void
+    {
+        if (blank($projectId) || (filled($allowedInactiveProjectId) && (string) $projectId === (string) $allowedInactiveProjectId)) {
+            return;
+        }
+
+        if (!Project::active()->find($projectId)) {
+            throw ValidationException::withMessages([
+                'project_id' => __('The selected project is invalid.'),
+            ]);
+        }
+    }
+
+    private function selectedProjectIsInactive(): bool
+    {
+        $selectedProjectId = data_get(session('selected_project'), 'id');
+
+        if (blank($selectedProjectId)) {
+            return false;
+        }
+
+        $project = Project::find($selectedProjectId);
+
+        return $project && !$project->is_active;
+    }
+
     private function contractsForFront(?string $excludePayId = null)
     {
+        $currentContractId = $excludePayId ? (Pay::find($excludePayId)?->contract_id ?? null) : null;
+        $activeProjectIds = Project::active()
+            ->get()
+            ->map(fn ($project) => (string) $project->_id)
+            ->all();
         $chartAccountNames = ChartAccount::all()
             ->mapWithKeys(fn ($chartAccount) => [(string) $chartAccount->_id => $chartAccount->name]);
 
-        return Contract::all()->map(function ($contract) use ($chartAccountNames, $excludePayId) {
+        return Contract::all()
+            ->filter(function ($contract) use ($activeProjectIds, $currentContractId) {
+                return in_array((string) ($contract->project_id ?? ''), $activeProjectIds, true)
+                    || (filled($currentContractId) && (string) $contract->_id === (string) $currentContractId);
+            })
+            ->map(function ($contract) use ($chartAccountNames, $excludePayId) {
             $budgets = collect($contract->contract_budgets ?? [])->map(function ($budget) use ($contract, $chartAccountNames, $excludePayId) {
                 $chartAccountId = (string) ($budget['chartAccount_id'] ?? '');
                 $budgetAmount = (float) ($budget['budget'] ?? 0);
@@ -527,6 +574,7 @@ class PayController extends Controller
                 'name' => $contract->name,
                 'contractor_id' => (string) $contract->contractor_id,
                 'project_id' => (string) ($contract->project_id ?? ''),
+                'subproject' => (string) ($contract->subproject ?? ''),
                 'budgets' => $budgets,
             ];
         })->values();

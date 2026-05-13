@@ -36,6 +36,8 @@
         .contract-field .hs-dropdown{ order: 3; }
 
         .contract-field .contract-select{ order: 4; }
+
+        .contract-field .contract-detail-button{ order: 5; }
     </style>
 
 
@@ -216,6 +218,13 @@
                 @error('contract_id')
                 <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                 @enderror
+                <button type="button"
+                        id="viewContractDetailButton"
+                        class="contract-detail-button mt-2 inline-flex items-center justify-center gap-x-2 self-start rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-800 shadow-2xs hover:bg-gray-50 focus:outline-hidden disabled:opacity-50 disabled:pointer-events-none dark:bg-neutral-800 dark:border-neutral-700 dark:text-white dark:hover:bg-neutral-700"
+                        onclick="openSelectedContractDetailModal()"
+                        disabled>
+                    {{ __('View contract') }}
+                </button>
             </div>
         </div>
         <div id="contractBudgetAllocations" class="hidden space-y-3">
@@ -292,6 +301,7 @@
 
 
     </form>
+    @include('pays.partials.contract-detail-modal')
 
     <div id="confirm-create-pay-modal"
          class="hs-overlay hidden size-full fixed top-0 start-0 z-80 overflow-x-hidden overflow-y-auto pointer-events-none"
@@ -401,6 +411,9 @@
                     document.getElementById('project_id')?.addEventListener('change', () => {
                         this.onContractorChange(this.currentContractorId);
                     });
+                    document.getElementById('subproject')?.addEventListener('change', () => {
+                        this.onContractorChange(this.currentContractorId);
+                    });
 
                     if (oldContractorId) {
                         this.onContractorChange(oldContractorId, oldContractId);
@@ -426,10 +439,12 @@
 
                 filteredContracts(contractorId) {
                     const projectId = document.getElementById('project_id')?.value ?? '';
+                    const subproject = document.getElementById('subproject')?.value ?? '';
 
                     return this.contracts.filter(contract =>
                         contract.contractor_id === contractorId &&
-                        (!projectId || contract.project_id === projectId)
+                        (!projectId || contract.project_id === projectId) &&
+                        (!subproject || contract.subproject === subproject)
                     );
                 },
 
@@ -512,6 +527,8 @@
         });
 
         function renderContractBudgetAllocations(contractId) {
+            setContractDetailButtonEnabled(contractId);
+
             const section = document.getElementById('contractBudgetAllocations');
             const rows = document.getElementById('contractBudgetRows');
             const legacy = document.getElementById('legacyChartAccountField');
@@ -612,7 +629,7 @@
         }
 
         function formatMoney(value) {
-            return '$' + Number(value || 0).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            return '$' + Number(value || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         }
 
         function parsePayMoneyInput(value) {

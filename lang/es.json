@@ -406,5 +406,15 @@
     "Information": "Información",
     "Payments": "Pagos",
     "Balance": "Balance",
-    "Paid percentage": "Porcentaje pagado"
+    "Paid percentage": "Porcentaje pagado",
+    "View contract": "Ver contrato",
+    "Select a contract": "Selecciona un contrato",
+    "Loading": "Cargando",
+    "Unable to load the contract detail": "No se pudo cargar el detalle del contrato",
+    "Showing 0 records": "Mostrando 0 registros",
+    "Showing :start to :end of :total records": "Mostrando :start a :end de :total registros",
+    "filtered from :total total": "filtrado de :total en total",
+    "Active": "Activo",
+    "Inactive": "Inactivo",
+    "Inactive projects cannot be used to create new records.": "Los proyectos inactivos no se pueden usar para crear nuevos registros."
 }

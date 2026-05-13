@@ -16,7 +16,7 @@ class ContractorController extends Controller
 
         $query = Contractor::query();
 
-        $contractors = $query->paginate(10);
+        $contractors = $query->get();
 
         return view('contractors.index', compact('contractors'));
     }

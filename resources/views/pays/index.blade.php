@@ -6,6 +6,7 @@
     @php
         $userRole = Auth::user()->role;
         $userId = Auth::id();
+        $selectedProjectIsInactive = filled(data_get($selectedProject ?? null, 'id')) && data_get($selectedProject ?? null, 'status') === 'inactive';
     @endphp
 
     <div class="flex flex-col">
@@ -46,9 +47,11 @@
                                 </flux:select>
                             </form>
 
-                            <a href="{{ route('pays.create') }}">
-                                <flux:button variant="filled" icon="plus">{{__('New')}}</flux:button>
-                            </a>
+                            @unless($selectedProjectIsInactive)
+                                <a href="{{ route('pays.create') }}">
+                                    <flux:button variant="filled" icon="plus">{{__('New')}}</flux:button>
+                                </a>
+                            @endunless
                         </div>
                     </div>
                     <div class="overflow-hidden">
@@ -69,7 +72,7 @@
                             <tbody class="divide-y divide-gray-200 dark:divide-neutral-700">
                             @forelse($pays as $pay)
                                 <tr >
-                                    <td class="px-4 py-4 text-sm font-medium text-gray-800 dark:text-neutral-200">{{ $pay->created_at }}</td>
+                                    <td class="px-4 py-4 text-sm font-medium text-gray-800 dark:text-neutral-200">{{ optional($pay->created_at)->format('m/d/Y') }}</td>
                                     <td class="px-4 py-4 text-sm font-medium text-gray-800 break-words dark:text-neutral-200">{{ $pay->project->name }}</td>
                                     <td class="px-4 py-4 text-sm font-medium text-gray-800 break-words dark:text-neutral-200">{{ $pay->subproject }}</td>
                                     <td class="px-4 py-4 text-sm font-medium text-gray-800 break-words dark:text-neutral-200">{{ $pay->contractor->company_name }}</td>
@@ -147,34 +150,18 @@
                                     </td>
                                 </tr>
                             @empty
-                                <tr>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td class="px-6 py-4 text-center text-gray-500">
-                                        {{ __('There are no registered :name.', ['name'=>__('projects')]) }}
-                                    </td>
-
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                </tr>
                             @endforelse
 
 
                             </tbody>
                         </table>
                     </div>
-                    <div class="py-1 px-4">
-                        {{ $pays->links() }}
-                    </div>
-
                 </div>
             </div>
         </div>
     </div>
+
+    @include('partials.datatable-pagination')
 
     <div id="hs-vertically-centered-modal" class="hs-overlay hidden size-full fixed top-0 start-0 z-80 overflow-x-hidden overflow-y-auto pointer-events-none" role="dialog" tabindex="-1" aria-labelledby="hs-vertically-centered-modal-label" wire:ignore>
         <div class="hs-overlay-open:mt-7 hs-overlay-open:opacity-100 hs-overlay-open:duration-500 mt-0 opacity-0 ease-out transition-all sm:max-w-lg sm:w-full m-3 sm:mx-auto min-h-[calc(100%-56px)] flex items-center">
@@ -385,7 +372,7 @@
                         tr.innerHTML = `
                 <td class="border px-2 py-1 text-base  text-gray-700 dark:text-neutral-200">${history.user_name}</td>
                 <td class="border px-2 py-1 text-base  text-gray-700 dark:text-neutral-200">${history.action}</td>
-                <td class="border px-2 py-1 text-base  text-gray-700 dark:text-neutral-200">${new Date(history.created_at).toLocaleString()}</td>
+                <td class="border px-2 py-1 text-base  text-gray-700 dark:text-neutral-200">${formatUsDateTime(history.created_at)}</td>
             `;
                         tbody.appendChild(tr);
                     });
@@ -396,22 +383,22 @@
                 }
             }
 
+            function formatUsDateTime(value) {
+                if (!value) return '';
+
+                return new Date(value).toLocaleString('en-US', {
+                    month: '2-digit',
+                    day: '2-digit',
+                    year: 'numeric',
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    hour12: true,
+                });
+            }
+
 
             $(document).ready(function () {
-                // Inicializamos DataTable
-                let table = $('#projectsTable').DataTable({
-                    dom: '',
-                    language: {
-                        zeroRecords: "{{__("No matching records found")}}",
-
-                    }
-
-                });
-
-                // Conectar tu input Preline al DataTable
-                $('#hs-table-with-pagination-search').on('keyup', function () {
-                    table.search(this.value).draw();
-                });
+                let table = initWorkflowDataTable('#projectsTable', '#hs-table-with-pagination-search');
                 $("#editProjectForm").on("submit", function (e) {
                     e.preventDefault(); // evita reload
 
