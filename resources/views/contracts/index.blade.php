@@ -17,6 +17,18 @@
         .subproject-field .hs-dropdown{ order: 3; }
 
         .subproject-field .sp-select{ order: 4; }
+
+        .budget-row {
+            grid-template-columns: 45% 20% 30% 5%;
+        }
+
+        @media (min-width: 640px) {
+            .budget-row > .hs-select button,
+            .budget-row > [data-hs-select-toggle] {
+                border-top-right-radius: 0 !important;
+                border-bottom-right-radius: 0 !important;
+            }
+        }
     </style>
     @php
         $userRole = Auth::user()->role;
@@ -52,6 +64,8 @@
                 '<div class="absolute top-1/2 end-3 -translate-y-1/2"><svg class="shrink-0 size-3.5 text-gray-500 dark:text-neutral-500 " xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 15 5 5 5-5"/><path d="m7 9 5-5 5 5"/></svg></div>',
             ],
         ];
+        $budgetSelectConfig = $contractSelectConfig;
+        $budgetSelectConfig['toggleClasses'] = str_replace('rounded-lg', 'rounded-s-lg rounded-e-none', $budgetSelectConfig['toggleClasses']);
     @endphp
 
     <div class="flex flex-col">
@@ -246,7 +260,7 @@
                 <div class="space-y-3">
                     <div class="flex items-center justify-between gap-3">
                         <label class="block text-base text-gray-700 dark:text-neutral-200">
-                            {{ __('Budget Code') }} / {{ __('Budget') }}
+                            {{ __('Budget Code') }} / {{ __('Concept') }} / {{ __('Budget') }}
                         </label>
                         <button type="button"
                                 onclick="addEditBudgetRow()"
@@ -359,7 +373,7 @@
     @push('scripts')
         <script>
             window.contractChartAccountOptions = @json($chartAccountsForFront);
-            window.contractBudgetSelectConfig = @json($contractSelectConfig);
+            window.contractBudgetSelectConfig = @json($budgetSelectConfig);
             window.lockedContractProjectId = @json($lockedProjectId);
             window.contractProjectsForFront = @json($projectsForFront);
 
@@ -453,7 +467,7 @@
                 }));
             });
 
-            window.addEditBudgetRow = function (budget = {}) {
+            window.addEditBudgetRow = function (budget = {}, updateDuplicates = true) {
                 const rows = document.getElementById('editBudgetRows');
                 const index = rows.querySelectorAll('.budget-row').length;
                 const selectedChartAccountId = String(budget.chartAccount_id ?? '');
@@ -468,7 +482,7 @@
                 const spent = budget.spent ?? 0;
 
                 rows.insertAdjacentHTML('beforeend', `
-                    <div class="budget-row grid grid-cols-1 gap-3 sm:grid-cols-[1fr_180px_44px]">
+                    <div class="budget-row grid grid-cols-1 items-start">
                         <div>
                             <select name="contract_budgets[${index}][chartAccount_id]" class="budget-account hidden">
                                 <option value=""></option>${options}
@@ -478,19 +492,21 @@
                                 <span>{{ __('Spent') }}: ${formatContractMoney(spent)}</span>
                             </div>
                         </div>
-                        <div>
-                            <div class="relative">
-                                <input type="text" inputmode="decimal" name="contract_budgets[${index}][budget]" value="${escapeContractHtml(budget.budget ?? '')}" class="budget-amount w-full rounded-lg border border-gray-200 bg-white py-3 ps-9 pe-3 text-sm text-gray-800 focus:border-blue-500 focus:ring-blue-500 dark:bg-neutral-700 dark:border-neutral-700 dark:text-neutral-200" placeholder="0.00">
-                                <div class="absolute inset-y-0 inset-s-0 flex items-center pointer-events-none ps-3">
-                                    <span class="text-gray-500 dark:text-neutral-400">$</span>
-                                </div>
+                        <input type="text" name="contract_budgets[${index}][concept]" value="${escapeContractHtml(budget.concept ?? '')}" class="budget-concept h-[46px] w-full rounded-none border border-t-0 border-gray-200 bg-white px-3 text-sm text-gray-800 focus:z-10 focus:border-blue-500 focus:ring-blue-500 disabled:pointer-events-none disabled:bg-white disabled:text-gray-800 sm:border-s-0 sm:border-t sm:border-e-0 dark:bg-neutral-700 dark:border-neutral-700 dark:text-neutral-200 dark:disabled:bg-neutral-700 dark:disabled:text-neutral-200" disabled>
+                        <div class="budget-amount-wrap relative h-[46px]">
+                            <input type="text" inputmode="decimal" name="contract_budgets[${index}][budget]" value="${escapeContractHtml(budget.budget ?? '')}" class="budget-amount h-[46px] w-full rounded-none border border-t-0 border-gray-200 bg-white ps-9 pe-3 text-sm text-gray-800 focus:z-10 focus:border-blue-500 focus:ring-blue-500 sm:border-t dark:bg-neutral-700 dark:border-neutral-700 dark:text-neutral-200" placeholder="0.00">
+                            <div class="absolute inset-y-0 inset-s-0 flex items-center pointer-events-none ps-3">
+                                <span class="text-gray-500 dark:text-neutral-400">$</span>
                             </div>
                         </div>
-                        <button type="button" class="rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-700" onclick="removeEditBudgetRow(this)">X</button>
+                        <button type="button" class="h-[46px] rounded-b-lg border border-t-0 border-gray-200 text-gray-700 hover:bg-gray-50 sm:rounded-s-none sm:rounded-e-lg sm:border-t sm:border-s-0 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-700" onclick="removeEditBudgetRow(this)">X</button>
                     </div>
                 `);
 
                 initEditBudgetSelect(rows.lastElementChild.querySelector('.budget-account'));
+                if (updateDuplicates) {
+                    updateEditDuplicateConceptFields();
+                }
                 updateEditCompensationFromBudgets();
             };
 
@@ -499,12 +515,15 @@
                 if (rows.length === 1) {
                     rows[0].querySelector('.budget-account').value = '';
                     rows[0].querySelector('.budget-amount').value = '';
+                    rows[0].querySelector('.budget-concept').value = '';
+                    updateEditDuplicateConceptFields();
                     updateEditCompensationFromBudgets();
                     return;
                 }
 
                 button.closest('.budget-row').remove();
                 reindexEditBudgetRows();
+                updateEditDuplicateConceptFields();
                 updateEditCompensationFromBudgets();
             };
 
@@ -512,6 +531,30 @@
                 document.querySelectorAll('#editBudgetRows .budget-row').forEach((row, index) => {
                     row.querySelector('.budget-account').name = `contract_budgets[${index}][chartAccount_id]`;
                     row.querySelector('.budget-amount').name = `contract_budgets[${index}][budget]`;
+                    row.querySelector('.budget-concept').name = `contract_budgets[${index}][concept]`;
+                });
+            }
+
+            function updateEditDuplicateConceptFields() {
+                const rows = Array.from(document.querySelectorAll('#editBudgetRows .budget-row'));
+                const selectedCounts = rows.reduce((counts, row) => {
+                    const accountId = row.querySelector('.budget-account')?.value || '';
+                    if (accountId) counts[accountId] = (counts[accountId] || 0) + 1;
+                    return counts;
+                }, {});
+
+                rows.forEach(row => {
+                    const accountId = row.querySelector('.budget-account')?.value || '';
+                    const concept = row.querySelector('.budget-concept');
+                    const isDuplicate = accountId && selectedCounts[accountId] > 1;
+
+                    concept.disabled = !isDuplicate;
+                    concept.placeholder = isDuplicate ? '{{ __('Concept') }}' : '';
+                    concept.required = Boolean(isDuplicate);
+
+                    if (!isDuplicate) {
+                        concept.value = '';
+                    }
                 });
             }
 
@@ -526,7 +569,8 @@
                 const rows = document.getElementById('editBudgetRows');
                 rows.innerHTML = '';
                 const contractBudgets = Array.isArray(budgets) && budgets.length ? budgets : [{}];
-                contractBudgets.forEach((budget) => window.addEditBudgetRow(budget));
+                contractBudgets.forEach((budget) => window.addEditBudgetRow(budget, false));
+                updateEditDuplicateConceptFields();
             }
 
             function escapeContractHtml(str) {
@@ -643,6 +687,11 @@
                     if (event.target.classList.contains('budget-amount')) {
                         event.target.value = sanitizeContractMoneyInput(event.target.value);
                         updateEditCompensationFromBudgets();
+                    }
+                });
+                document.getElementById('editBudgetRows')?.addEventListener('change', function(event) {
+                    if (event.target.classList.contains('budget-account')) {
+                        updateEditDuplicateConceptFields();
                     }
                 });
 

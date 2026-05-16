@@ -68,7 +68,9 @@ class PayController extends Controller
             'contract_id' => 'nullable|string',
             'chartAccount_id' => 'nullable|string',
             'payment_allocations' => 'nullable|array',
-            'payment_allocations.*.chartAccount_id' => 'nullable|string|distinct',
+            'payment_allocations.*.chartAccount_id' => 'nullable|string',
+            'payment_allocations.*.budget_key' => 'nullable|string',
+            'payment_allocations.*.concept' => 'nullable|string',
             'payment_allocations.*.amount' => 'nullable|numeric|min:0',
             'amount' => 'required|numeric|min:0',
             'description' => 'nullable|string',
@@ -136,7 +138,9 @@ class PayController extends Controller
             'contract_id' => 'nullable|string',
             'chartAccount_id' => 'nullable|string',
             'payment_allocations' => 'nullable|array',
-            'payment_allocations.*.chartAccount_id' => 'nullable|string|distinct',
+            'payment_allocations.*.chartAccount_id' => 'nullable|string',
+            'payment_allocations.*.budget_key' => 'nullable|string',
+            'payment_allocations.*.concept' => 'nullable|string',
             'payment_allocations.*.amount' => 'nullable|numeric|min:0',
             'amount' => 'required|numeric|min:0',
             'description' => 'nullable|string',
@@ -289,7 +293,9 @@ class PayController extends Controller
             'contract_id' => 'nullable|string',
             'chartAccount_id' => 'nullable|string',
             'payment_allocations' => 'nullable|array',
-            'payment_allocations.*.chartAccount_id' => 'nullable|string|distinct',
+            'payment_allocations.*.chartAccount_id' => 'nullable|string',
+            'payment_allocations.*.budget_key' => 'nullable|string',
+            'payment_allocations.*.concept' => 'nullable|string',
             'payment_allocations.*.amount' => 'nullable|numeric|min:0',
             'amount' => 'required|numeric|min:0',
             'description' => 'nullable|string',
@@ -447,8 +453,17 @@ class PayController extends Controller
             ->filter(fn ($allocation) => filled($allocation['chartAccount_id'] ?? null) || filled($allocation['amount'] ?? null))
             ->map(fn ($allocation) => [
                 'chartAccount_id' => (string) ($allocation['chartAccount_id'] ?? ''),
+                'concept' => trim((string) ($allocation['concept'] ?? '')),
+                'budget_key' => (string) ($allocation['budget_key'] ?? ''),
                 'amount' => (float) ($allocation['amount'] ?? 0),
             ])
+            ->map(function ($allocation) {
+                if (blank($allocation['budget_key'])) {
+                    $allocation['budget_key'] = $this->budgetKey($allocation['chartAccount_id'], $allocation['concept']);
+                }
+
+                return $allocation;
+            })
             ->filter(fn ($allocation) => filled($allocation['chartAccount_id']) && $allocation['amount'] > 0)
             ->values();
 
@@ -466,26 +481,31 @@ class PayController extends Controller
             ]);
         }
 
-        $budgetByChartAccount = collect($contract->contract_budgets ?? [])
-            ->mapWithKeys(fn ($budget) => [(string) ($budget['chartAccount_id'] ?? '') => (float) ($budget['budget'] ?? 0)]);
-        $existingAllocationByChartAccount = $payId
+        $budgetByKey = collect($contract->contract_budgets ?? [])
+            ->mapWithKeys(fn ($budget) => [
+                $this->budgetKey((string) ($budget['chartAccount_id'] ?? ''), (string) ($budget['concept'] ?? '')) => (float) ($budget['budget'] ?? 0),
+            ]);
+        $existingAllocationByKey = $payId
             ? collect(Pay::find($payId)?->payment_allocations ?? [])
                 ->mapWithKeys(fn ($allocation) => [
-                    (string) ($allocation['chartAccount_id'] ?? '') => (float) ($allocation['amount'] ?? 0),
+                    (string) ($allocation['budget_key'] ?? '') ?: $this->budgetKey(
+                        (string) ($allocation['chartAccount_id'] ?? ''),
+                        (string) ($allocation['concept'] ?? '')
+                    ) => (float) ($allocation['amount'] ?? 0),
                 ])
             : collect();
 
         foreach ($allocations as $allocation) {
-            $chartAccountId = $allocation['chartAccount_id'];
+            $budgetKey = $allocation['budget_key'];
 
-            if (!$budgetByChartAccount->has($chartAccountId)) {
+            if (!$budgetByKey->has($budgetKey)) {
                 throw ValidationException::withMessages([
                     'payment_allocations' => __('The selected budget code is not assigned to the selected contract.'),
                 ]);
             }
 
-            $remaining = $budgetByChartAccount[$chartAccountId] - $this->spentForContractBudget((string) $contract->_id, $chartAccountId, $payId);
-            $availableForThisPay = $remaining + (float) ($existingAllocationByChartAccount[$chartAccountId] ?? 0);
+            $remaining = $budgetByKey[$budgetKey] - $this->spentForContractBudget((string) $contract->_id, $allocation['chartAccount_id'], $payId, $budgetKey);
+            $availableForThisPay = $remaining + (float) ($existingAllocationByKey[$budgetKey] ?? 0);
 
             if ($allocation['amount'] > $availableForThisPay) {
                 throw ValidationException::withMessages([
@@ -547,16 +567,19 @@ class PayController extends Controller
             ->map(function ($contract) use ($chartAccountNames, $excludePayId) {
             $budgets = collect($contract->contract_budgets ?? [])->map(function ($budget) use ($contract, $chartAccountNames, $excludePayId) {
                 $chartAccountId = (string) ($budget['chartAccount_id'] ?? '');
+                $budgetKey = $this->budgetKey($chartAccountId, (string) ($budget['concept'] ?? ''));
                 $budgetAmount = (float) ($budget['budget'] ?? 0);
-                $spent = $this->spentForContractBudget((string) $contract->_id, $chartAccountId, $excludePayId);
+                $spent = $this->spentForContractBudget((string) $contract->_id, $chartAccountId, $excludePayId, $budgetKey);
                 $remaining = max($budgetAmount - $spent, 0);
 
                 return [
                     'chartAccount_id' => $chartAccountId,
-                    'name' => $chartAccountNames[$chartAccountId] ?? '',
+                    'budget_key' => $budgetKey,
+                    'name' => trim(($chartAccountNames[$chartAccountId] ?? '') . (filled($budget['concept'] ?? null) ? ' - ' . $budget['concept'] : '')),
                     'budget' => $budgetAmount,
                     'spent' => $spent,
                     'remaining' => $remaining,
+                    'concept' => trim((string) ($budget['concept'] ?? '')),
                 ];
             })->values();
 
@@ -571,7 +594,7 @@ class PayController extends Controller
         })->values();
     }
 
-    private function spentForContractBudget(string $contractId, string $chartAccountId, ?string $excludePayId = null): float
+    private function spentForContractBudget(string $contractId, string $chartAccountId, ?string $excludePayId = null, ?string $budgetKey = null): float
     {
         $query = Pay::where('contract_id', $contractId)->where('status', '!=', 1);
 
@@ -579,17 +602,31 @@ class PayController extends Controller
             $query->where('_id', '!=', $excludePayId);
         }
 
-        return $query->get()->sum(function ($pay) use ($chartAccountId) {
+        return $query->get()->sum(function ($pay) use ($chartAccountId, $budgetKey) {
             $allocations = collect($pay->payment_allocations ?? []);
 
             if ($allocations->isNotEmpty()) {
-                return $allocations
-                    ->where('chartAccount_id', $chartAccountId)
-                    ->sum(fn ($allocation) => (float) ($allocation['amount'] ?? 0));
+                return $allocations->sum(function ($allocation) use ($chartAccountId, $budgetKey) {
+                    if ($budgetKey) {
+                        $allocationKey = (string) ($allocation['budget_key'] ?? '') ?: $this->budgetKey(
+                            (string) ($allocation['chartAccount_id'] ?? ''),
+                            (string) ($allocation['concept'] ?? '')
+                        );
+
+                        return $allocationKey === $budgetKey ? (float) ($allocation['amount'] ?? 0) : 0;
+                    }
+
+                    return (string) ($allocation['chartAccount_id'] ?? '') === $chartAccountId ? (float) ($allocation['amount'] ?? 0) : 0;
+                });
             }
 
             return (string) ($pay->chartAccount_id ?? '') === $chartAccountId ? (float) ($pay->amount ?? 0) : 0;
         });
+    }
+
+    private function budgetKey(string $chartAccountId, string $concept = ''): string
+    {
+        return $chartAccountId . '|' . strtolower(trim($concept));
     }
 
     private function syncContractBudgetUsage(?string $contractId): void
@@ -606,14 +643,17 @@ class PayController extends Controller
 
         $budgets = collect($contract->contract_budgets ?? [])->map(function ($budget) use ($contract) {
             $chartAccountId = (string) ($budget['chartAccount_id'] ?? '');
+            $budgetKey = $this->budgetKey($chartAccountId, (string) ($budget['concept'] ?? ''));
             $budgetAmount = (float) ($budget['budget'] ?? 0);
-            $spent = $this->spentForContractBudget((string) $contract->_id, $chartAccountId);
+            $spent = $this->spentForContractBudget((string) $contract->_id, $chartAccountId, null, $budgetKey);
 
             return [
                 'chartAccount_id' => $chartAccountId,
+                'budget_key' => $budgetKey,
                 'budget' => $budgetAmount,
                 'spent' => $spent,
                 'remaining' => max($budgetAmount - $spent, 0),
+                'concept' => trim((string) ($budget['concept'] ?? '')),
             ];
         })->values()->all();
 

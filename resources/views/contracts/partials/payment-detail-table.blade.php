@@ -52,7 +52,10 @@
         @forelse($budgetRows as $row)
             <tr>
                 <td class="sticky left-0 z-10 bg-white px-4 py-3 font-medium text-gray-800 dark:bg-neutral-900 dark:text-neutral-100">
-                    {{ $row['chartAccount_name'] }}
+                    <span class="block">{{ $row['chartAccount_name'] }}</span>
+                    @if(filled($row['concept'] ?? null))
+                        <span class="block text-xs font-normal text-gray-500 dark:text-neutral-400">{{ $row['concept'] }}</span>
+                    @endif
                 </td>
                 <td class="border-r-4 border-gray-300 px-4 py-3 text-right text-gray-700 dark:border-neutral-600 dark:text-neutral-200">
                     {{ $money($row['budget']) }}

@@ -94,10 +94,19 @@ class ContractController extends Controller
 
         $budgetRows = collect($contract->contract_budgets ?? [])->map(function ($budget) use ($chartAccounts, $payments) {
             $chartAccountId = (string) ($budget['chartAccount_id'] ?? '');
-            $paymentAmounts = $payments->mapWithKeys(function ($pay) use ($chartAccountId) {
+            $concept = trim((string) ($budget['concept'] ?? ''));
+            $budgetKey = $this->budgetKey($chartAccountId, $concept);
+            $paymentAmounts = $payments->mapWithKeys(function ($pay) use ($chartAccountId, $budgetKey) {
                 $allocations = collect($pay->payment_allocations ?? []);
                 $amount = $allocations->isNotEmpty()
-                    ? $allocations->where('chartAccount_id', $chartAccountId)->sum(fn ($allocation) => (float) ($allocation['amount'] ?? 0))
+                    ? $allocations->sum(function ($allocation) use ($budgetKey) {
+                        $allocationKey = (string) ($allocation['budget_key'] ?? '') ?: $this->budgetKey(
+                            (string) ($allocation['chartAccount_id'] ?? ''),
+                            (string) ($allocation['concept'] ?? '')
+                        );
+
+                        return $allocationKey === $budgetKey ? (float) ($allocation['amount'] ?? 0) : 0;
+                    })
                     : ((string) ($pay->chartAccount_id ?? '') === $chartAccountId ? (float) ($pay->amount ?? 0) : 0);
 
                 return [(string) $pay->_id => $amount];
@@ -105,10 +114,12 @@ class ContractController extends Controller
 
             return [
                 'chartAccount_id' => $chartAccountId,
+                'budget_key' => $budgetKey,
                 'chartAccount_name' => $chartAccounts->get($chartAccountId)?->name ?? '',
+                'concept' => $concept,
                 'budget' => (float) ($budget['budget'] ?? 0),
-                'spent' => (float) ($budget['spent'] ?? $paymentAmounts->sum()),
-                'remaining' => (float) ($budget['remaining'] ?? max(((float) ($budget['budget'] ?? 0)) - $paymentAmounts->sum(), 0)),
+                'spent' => $paymentAmounts->sum(),
+                'remaining' => max(((float) ($budget['budget'] ?? 0)) - $paymentAmounts->sum(), 0),
                 'payments' => $paymentAmounts,
             ];
         })->values();
@@ -181,8 +192,9 @@ class ContractController extends Controller
             'project_id' => 'required|string',
             'subproject' => 'nullable|string|max:255',
             'contract_budgets' => 'required|array|min:1',
-            'contract_budgets.*.chartAccount_id' => 'required|string|distinct',
+            'contract_budgets.*.chartAccount_id' => 'required|string',
             'contract_budgets.*.budget' => 'required|numeric|min:0',
+            'contract_budgets.*.concept' => 'nullable|string|max:255',
         ]);
 
         if (!Project::active()->find($data['project_id'])) {
@@ -199,10 +211,37 @@ class ContractController extends Controller
             }
         }
 
+        $duplicateAccountIds = collect($data['contract_budgets'])
+            ->groupBy(fn ($budget) => (string) ($budget['chartAccount_id'] ?? ''))
+            ->filter(fn ($budgets, $chartAccountId) => filled($chartAccountId) && $budgets->count() > 1)
+            ->keys();
+
+        if ($duplicateAccountIds->isNotEmpty()) {
+            foreach ($data['contract_budgets'] as $budget) {
+                $chartAccountId = (string) ($budget['chartAccount_id'] ?? '');
+
+                if ($duplicateAccountIds->contains($chartAccountId) && blank($budget['concept'] ?? null)) {
+                    throw ValidationException::withMessages([
+                        'contract_budgets' => __('The concept field is required when the budget code is repeated.'),
+                    ]);
+                }
+            }
+
+            $repeatedKeys = collect($data['contract_budgets'])
+                ->map(fn ($budget) => (string) ($budget['chartAccount_id'] ?? '') . '|' . strtolower(trim((string) ($budget['concept'] ?? ''))));
+
+            if ($repeatedKeys->duplicates()->isNotEmpty()) {
+                throw ValidationException::withMessages([
+                    'contract_budgets' => __('The same budget code cannot use the same concept more than once.'),
+                ]);
+            }
+        }
+
         $data['contract_budgets'] = collect($data['contract_budgets'])
             ->map(fn ($budget) => [
                 'chartAccount_id' => (string) $budget['chartAccount_id'],
                 'budget' => (float) $budget['budget'],
+                'concept' => trim((string) ($budget['concept'] ?? '')),
             ])
             ->values()
             ->all();
@@ -234,35 +273,53 @@ class ContractController extends Controller
 
         $budgets = collect($contract->contract_budgets ?? [])->map(function ($budget) use ($contract) {
             $chartAccountId = (string) ($budget['chartAccount_id'] ?? '');
+            $concept = trim((string) ($budget['concept'] ?? ''));
+            $budgetKey = $this->budgetKey($chartAccountId, $concept);
             $budgetAmount = (float) ($budget['budget'] ?? 0);
-            $spent = $this->spentForContractBudget((string) $contract->_id, $chartAccountId);
+            $spent = $this->spentForContractBudget((string) $contract->_id, $chartAccountId, $budgetKey);
 
             return [
                 'chartAccount_id' => $chartAccountId,
+                'budget_key' => $budgetKey,
                 'budget' => $budgetAmount,
                 'spent' => $spent,
                 'remaining' => max($budgetAmount - $spent, 0),
+                'concept' => $concept,
             ];
         })->values()->all();
 
         $contract->update(['contract_budgets' => $budgets]);
     }
 
-    private function spentForContractBudget(string $contractId, string $chartAccountId): float
+    private function spentForContractBudget(string $contractId, string $chartAccountId, ?string $budgetKey = null): float
     {
         return Pay::where('contract_id', $contractId)
             ->where('status', '!=', 1)
             ->get()
-            ->sum(function ($pay) use ($chartAccountId) {
+            ->sum(function ($pay) use ($chartAccountId, $budgetKey) {
                 $allocations = collect($pay->payment_allocations ?? []);
 
                 if ($allocations->isNotEmpty()) {
-                    return $allocations
-                        ->where('chartAccount_id', $chartAccountId)
-                        ->sum(fn ($allocation) => (float) ($allocation['amount'] ?? 0));
+                    return $allocations->sum(function ($allocation) use ($chartAccountId, $budgetKey) {
+                        if ($budgetKey) {
+                            $allocationKey = (string) ($allocation['budget_key'] ?? '') ?: $this->budgetKey(
+                                (string) ($allocation['chartAccount_id'] ?? ''),
+                                (string) ($allocation['concept'] ?? '')
+                            );
+
+                            return $allocationKey === $budgetKey ? (float) ($allocation['amount'] ?? 0) : 0;
+                        }
+
+                        return (string) ($allocation['chartAccount_id'] ?? '') === $chartAccountId ? (float) ($allocation['amount'] ?? 0) : 0;
+                    });
                 }
 
                 return (string) ($pay->chartAccount_id ?? '') === $chartAccountId ? (float) ($pay->amount ?? 0) : 0;
             });
+    }
+
+    private function budgetKey(string $chartAccountId, string $concept = ''): string
+    {
+        return $chartAccountId . '|' . strtolower(trim($concept));
     }
 }
