@@ -54,21 +54,21 @@ Route::middleware(['auth'])->group(function () {
 
     Route::middleware(['role:accounting_assistant,director,admin'])->group(function () {
         Route::resource('contractors', ContractorController::class);
-        Route::resource('contracts', ContractController::class);
         Route::resource('projects', ProjectController::class);
         Route::resource('chartAccounts', ChartAccountController::class)->except(['show']);
         Route::get('chartAccounts/tree', [ChartAccountController::class, 'tree'])
             ->name('chartAccounts.tree');
     });
 
-    Route::middleware(['role:,admin'])->group(function () {
+    Route::middleware(['role:admin'])->group(function () {
         Route::resource('users', UserController::class);
     });
 
-    Route::middleware(['role:,director,accounting_assistant,project_manager,admin'])->group(function () {
+    Route::middleware(['role:director,accounting_assistant,project_manager,admin'])->group(function () {
         Route::get('contracts/{id}/payment-detail-table', [ContractController::class, 'paymentDetailTable'])
             ->name('contracts.paymentDetailTable');
         Route::resource('pays', PayController::class);
+        Route::resource('contracts', ContractController::class);
     });
 
 

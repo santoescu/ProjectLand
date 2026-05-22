@@ -10,7 +10,7 @@
 
         <flux:input label="{{__('Name')}}" name="name" :value="old('name')" />
         <div data-flux-field>
-            <label for="parent_id"  class="block text-base">
+            <label for="parent_id"  class="block text-base text-gray-700 dark:text-neutral-200">
                 {{ __('Parent') }}
             </label>
             <select data-hs-select='{

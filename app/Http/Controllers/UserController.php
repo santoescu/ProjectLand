@@ -9,6 +9,7 @@ use Illuminate\Validation\Rule;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Validation\ValidationException;
 
 
 class UserController extends Controller
@@ -86,7 +87,13 @@ class UserController extends Controller
 
         $user = User::findOrFail($id);
 
-        if ($user->isDirty('email')) {
+        if ((string) Auth::id() === (string) $user->getKey() && $request->role !== $user->role) {
+            throw ValidationException::withMessages([
+                'role' => __('You cannot change your own role.'),
+            ]);
+        }
+
+        if ($request->email !== $user->email) {
             $user->email_verified_at = null;
         }
 

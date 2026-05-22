@@ -150,8 +150,8 @@
     </div>
 
 
-    <div id="edit-contract" class="hs-overlay hs-overlay-open:translate-x-0 hidden translate-x-full fixed top-0 end-0 transition-all duration-300 transform h-full max-w-2xl w-full z-80 bg-white border-e border-gray-200 dark:bg-neutral-800 dark:border-neutral-700" role="dialog" tabindex="-1" aria-labelledby="edit-contract-label">
-        <div class="flex justify-between items-center py-3 px-4 border-b border-gray-200 dark:border-neutral-700">
+    <div id="edit-contract" class="hs-overlay hs-overlay-open:translate-x-0 hidden translate-x-full fixed top-0 end-0 transition-all duration-300 transform h-full max-w-2xl w-full z-80 bg-white border-e border-gray-200 dark:bg-neutral-800 dark:border-neutral-700 flex flex-col" role="dialog" tabindex="-1" aria-labelledby="edit-contract-label">
+        <div class="shrink-0 flex justify-between items-center py-3 px-4 border-b border-gray-200 dark:border-neutral-700">
             <h3 id="edit-contract-label" class="font-bold text-gray-800 dark:text-white">
                 {{ __("Edit :name", ['name' => __('Contract')]) }}
             </h3>
@@ -163,7 +163,7 @@
                 </svg>
             </button>
         </div>
-        <div class="p-4">
+        <div class="flex-1 overflow-y-auto p-4">
             <form id="editContractForm" method="POST" action="" class="space-y-6">
                 @csrf
                 @method('PUT')

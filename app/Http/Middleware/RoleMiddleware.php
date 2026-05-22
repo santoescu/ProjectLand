@@ -19,6 +19,7 @@ class RoleMiddleware
     public function handle(Request $request, Closure $next, ...$roles)
     {
         $user = Auth::user();
+        $roles = array_filter($roles);
 
 
         if (!$user) {
@@ -26,7 +27,7 @@ class RoleMiddleware
         }
 
 
-        if (! in_array($user->role, $roles)) {
+        if (! in_array($user->role, $roles, true)) {
             abort(403);
         }
 

@@ -9,6 +9,12 @@
             'url' => route('pays.index'),
             'current' => request()->routeIs('pays.index'),
         ],
+        [
+            'name' => __('Contracts'),
+            'icon' => 'clipboard-document-check',
+            'url' => route('contracts.index'),
+            'current' => request()->routeIs('contracts.index'),
+        ]
     ];
 
     if (in_array($userRole, ['accounting_assistant', 'director', 'admin'])) {
@@ -17,12 +23,6 @@
             'icon' => 'clipboard-document-list',
             'url' => route('contractors.index'),
             'current' => request()->routeIs('contractors.index'),
-        ];
-        $groups[] = [
-            'name' => __('Contracts'),
-            'icon' => 'clipboard-document-check',
-            'url' => route('contracts.index'),
-            'current' => request()->routeIs('contracts.index'),
         ];
 
         $groups[] = [
