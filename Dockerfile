@@ -32,6 +32,7 @@ RUN apt-get update && apt-get install -y \
     libxml2-dev \
     libzip-dev \
     libssl-dev \
+    libzstd-dev \
     pkg-config \
     && docker-php-ext-install mbstring zip exif pcntl bcmath gd
 
@@ -72,5 +73,4 @@ EXPOSE 8080
 
 # Servir Laravel
 CMD ["sh", "-c", "php -S 0.0.0.0:${PORT:-8080} -t public"]
-
 
