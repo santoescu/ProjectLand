@@ -68,7 +68,7 @@
             $budgetSelectConfig['toggleClasses'] = str_replace('rounded-lg', 'rounded-s-lg rounded-e-none', $budgetSelectConfig['toggleClasses']);
         @endphp
 
-        <flux:input label="{{__('name')}}" name="name" :value="old('name')" />
+        <flux:input label="{{__('Name')}}" name="name" :value="old('name')" />
 
 
         <div data-flux-field class="relative {{ $errors->has('contractor_id') ? 'error' : '' }}">

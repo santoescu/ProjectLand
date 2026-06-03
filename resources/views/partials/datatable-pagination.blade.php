@@ -2,7 +2,7 @@
     window.initWorkflowDataTable = function(selector, searchSelector, options = {}) {
         const table = $(selector).DataTable({
             dom: 't<"workflow-datatable-footer flex flex-col gap-2 py-3 px-4 sm:flex-row sm:items-center sm:justify-between"<"workflow-datatable-info-wrap"><"workflow-datatable-pagination">>',
-            pageLength: options.pageLength || 10,
+            pageLength: options.pageLength || 50,
             language: {
                 zeroRecords: options.zeroRecords || "{{ __('No matching records found') }}",
             },

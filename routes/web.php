@@ -21,7 +21,7 @@ Route::get('/', function () {
 Route::get('dashboard', function () {
     session()->forget('selected_project');
 
-    $projects = Project::query()->orderBy('name')->get();
+    $projects = Project::query()->active()->orderBy('name')->get();
 
     return view('dashboard', compact('projects'));
 })->middleware(['auth', 'verified'])->name('dashboard');
