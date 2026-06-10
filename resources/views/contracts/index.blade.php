@@ -494,7 +494,7 @@
                         </div>
                         <input type="text" name="contract_budgets[${index}][concept]" value="${escapeContractHtml(budget.concept ?? '')}" class="budget-concept h-[46px] w-full rounded-none border border-t-0 border-gray-200 bg-white px-3 text-sm text-gray-800 focus:z-10 focus:border-blue-500 focus:ring-blue-500 disabled:pointer-events-none disabled:bg-white disabled:text-gray-800 sm:border-s-0 sm:border-t sm:border-e-0 dark:bg-neutral-700 dark:border-neutral-700 dark:text-neutral-200 dark:disabled:bg-neutral-700 dark:disabled:text-neutral-200" disabled>
                         <div class="budget-amount-wrap relative h-[46px]">
-                            <input type="text" inputmode="decimal" name="contract_budgets[${index}][budget]" value="${escapeContractHtml(budget.budget ?? '')}" class="budget-amount h-[46px] w-full rounded-none border border-t-0 border-gray-200 bg-white ps-9 pe-3 text-sm text-gray-800 focus:z-10 focus:border-blue-500 focus:ring-blue-500 sm:border-t dark:bg-neutral-700 dark:border-neutral-700 dark:text-neutral-200" placeholder="0.00">
+                            <input type="text" inputmode="decimal" name="contract_budgets[${index}][budget]" value="${escapeContractHtml(formatContractMoneyInputWhileTyping(budget.budget ?? ''))}" class="budget-amount h-[46px] w-full rounded-none border border-t-0 border-gray-200 bg-white ps-9 pe-3 text-sm text-gray-800 focus:z-10 focus:border-blue-500 focus:ring-blue-500 sm:border-t dark:bg-neutral-700 dark:border-neutral-700 dark:text-neutral-200" placeholder="0.00">
                             <div class="absolute inset-y-0 inset-s-0 flex items-center pointer-events-none ps-3">
                                 <span class="text-gray-500 dark:text-neutral-400">$</span>
                             </div>
@@ -607,6 +607,55 @@
                 return Number(normalizeContractMoneyValue(value)) || 0;
             }
 
+            function contractMoneyInputParts(value) {
+                value = String(value || '').replace(/[^0-9,.]/g, '');
+
+                if (!value) {
+                    return { integerPart: '', decimalPart: '', hasDecimal: false };
+                }
+
+                const lastComma = value.lastIndexOf(',');
+                const lastDot = value.lastIndexOf('.');
+                const separatorIndex = Math.max(lastComma, lastDot);
+                const separator = separatorIndex === -1 ? '' : value[separatorIndex];
+                const separatorCount = (value.match(/[,.]/g) || []).length;
+                const digitsAfterSeparator = separatorIndex === -1 ? 0 : value.length - separatorIndex - 1;
+                const hasDecimal = separatorIndex !== -1
+                    && (
+                        value.endsWith(separator)
+                        || lastComma !== -1 && lastDot !== -1
+                        || separatorCount === 1 && digitsAfterSeparator <= 2
+                    );
+
+                if (!hasDecimal) {
+                    return {
+                        integerPart: value.replace(/[,.]/g, ''),
+                        decimalPart: '',
+                        hasDecimal: false,
+                    };
+                }
+
+                return {
+                    integerPart: value.slice(0, separatorIndex).replace(/[,.]/g, ''),
+                    decimalPart: value.slice(separatorIndex + 1).replace(/[,.]/g, '').substring(0, 2),
+                    hasDecimal: true,
+                };
+            }
+
+            function formatContractMoneyInputWhileTyping(value) {
+                const parts = contractMoneyInputParts(value);
+
+                if (!parts.integerPart && !parts.hasDecimal) {
+                    return '';
+                }
+
+                const integerPart = (parts.integerPart || '0')
+                    .replace(/^0+(?=\d)/, '')
+                    .replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+
+                return parts.hasDecimal ? `${integerPart}.${parts.decimalPart}` : integerPart;
+            }
+
             function sanitizeContractMoneyInput(value) {
                 value = String(value || '').replace(/[^0-9,.]/g, '');
                 const separatorIndex = value.search(/[,.]/);
@@ -623,25 +672,10 @@
             }
 
             function normalizeContractMoneyValue(value) {
-                value = sanitizeContractMoneyInput(value);
-                const lastComma = value.lastIndexOf(',');
-                const lastDot = value.lastIndexOf('.');
+                const parts = contractMoneyInputParts(value);
+                const integerPart = parts.integerPart || '0';
 
-                if (lastComma !== -1 && lastDot !== -1) {
-                    const decimalSeparator = lastComma > lastDot ? ',' : '.';
-                    const thousandsSeparator = decimalSeparator === ',' ? '.' : ',';
-                    return value.replaceAll(thousandsSeparator, '').replace(decimalSeparator, '.');
-                }
-
-                if (lastComma !== -1) {
-                    return normalizeContractSingleSeparatorMoney(value, ',');
-                }
-
-                if (lastDot !== -1) {
-                    return normalizeContractSingleSeparatorMoney(value, '.');
-                }
-
-                return value;
+                return parts.hasDecimal ? `${integerPart}.${parts.decimalPart}` : integerPart;
             }
 
             function normalizeContractSingleSeparatorMoney(value, separator) {
@@ -685,7 +719,7 @@
 
                 document.getElementById('editBudgetRows')?.addEventListener('input', function(event) {
                     if (event.target.classList.contains('budget-amount')) {
-                        event.target.value = sanitizeContractMoneyInput(event.target.value);
+                        event.target.value = formatContractMoneyInputWhileTyping(event.target.value);
                         updateEditCompensationFromBudgets();
                     }
                 });

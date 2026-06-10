@@ -412,6 +412,55 @@
             return Number(normalizeMoneyInput(value)) || 0;
         }
 
+        function moneyInputParts(value) {
+            value = String(value || '').replace(/[^0-9,.]/g, '');
+
+            if (!value) {
+                return { integerPart: '', decimalPart: '', hasDecimal: false };
+            }
+
+            const lastComma = value.lastIndexOf(',');
+            const lastDot = value.lastIndexOf('.');
+            const separatorIndex = Math.max(lastComma, lastDot);
+            const separator = separatorIndex === -1 ? '' : value[separatorIndex];
+            const separatorCount = (value.match(/[,.]/g) || []).length;
+            const digitsAfterSeparator = separatorIndex === -1 ? 0 : value.length - separatorIndex - 1;
+            const hasDecimal = separatorIndex !== -1
+                && (
+                    value.endsWith(separator)
+                    || lastComma !== -1 && lastDot !== -1
+                    || separatorCount === 1 && digitsAfterSeparator <= 2
+                );
+
+            if (!hasDecimal) {
+                return {
+                    integerPart: value.replace(/[,.]/g, ''),
+                    decimalPart: '',
+                    hasDecimal: false,
+                };
+            }
+
+            return {
+                integerPart: value.slice(0, separatorIndex).replace(/[,.]/g, ''),
+                decimalPart: value.slice(separatorIndex + 1).replace(/[,.]/g, '').substring(0, 2),
+                hasDecimal: true,
+            };
+        }
+
+        function formatMoneyInputWhileTyping(value) {
+            const parts = moneyInputParts(value);
+
+            if (!parts.integerPart && !parts.hasDecimal) {
+                return '';
+            }
+
+            const integerPart = (parts.integerPart || '0')
+                .replace(/^0+(?=\d)/, '')
+                .replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+
+            return parts.hasDecimal ? `${integerPart}.${parts.decimalPart}` : integerPart;
+        }
+
         function sanitizeMoneyInput(value) {
             value = String(value || '').replace(/[^0-9,.]/g, '');
             const separatorIndex = value.search(/[,.]/);
@@ -428,25 +477,10 @@
         }
 
         function normalizeMoneyInput(value) {
-            value = sanitizeMoneyInput(value);
-            const lastComma = value.lastIndexOf(',');
-            const lastDot = value.lastIndexOf('.');
+            const parts = moneyInputParts(value);
+            const integerPart = parts.integerPart || '0';
 
-            if (lastComma !== -1 && lastDot !== -1) {
-                const decimalSeparator = lastComma > lastDot ? ',' : '.';
-                const thousandsSeparator = decimalSeparator === ',' ? '.' : ',';
-                return value.replaceAll(thousandsSeparator, '').replace(decimalSeparator, '.');
-            }
-
-            if (lastComma !== -1) {
-                return normalizeSingleSeparatorMoney(value, ',');
-            }
-
-            if (lastDot !== -1) {
-                return normalizeSingleSeparatorMoney(value, '.');
-            }
-
-            return value;
+            return parts.hasDecimal ? `${integerPart}.${parts.decimalPart}` : integerPart;
         }
 
         function normalizeSingleSeparatorMoney(value, separator) {
@@ -472,7 +506,7 @@
 
             document.getElementById('budgetRows')?.addEventListener('input', function(event) {
                 if (event.target.classList.contains('budget-amount')) {
-                    event.target.value = sanitizeMoneyInput(event.target.value);
+                    event.target.value = formatMoneyInputWhileTyping(event.target.value);
                     updateCompensationFromBudgets();
                 }
             });
@@ -482,6 +516,9 @@
                 }
             });
             updateDuplicateConceptFields('#budgetRows');
+            document.querySelectorAll('#budgetRows .budget-amount').forEach((budgetInput) => {
+                budgetInput.value = formatMoneyInputWhileTyping(budgetInput.value);
+            });
             updateCompensationFromBudgets();
 
             input.addEventListener('input', function() {

@@ -515,8 +515,12 @@
 
             const input = document.getElementById('amount');
 
+            if (input) {
+                input.value = formatPayMoneyInputWhileTyping(input.value);
+            }
+
             input.addEventListener('input', function() {
-                this.value = sanitizePayMoneyInput(this.value);
+                this.value = formatPayMoneyInputWhileTyping(this.value);
             });
             input.closest('form').addEventListener('submit', function() {
                 input.value = normalizePayMoneyInput(input.value);
@@ -578,7 +582,7 @@
                             </span>
                         </div>
                         <div class="relative h-[46px]">
-                            <input type="text" inputmode="decimal" class="allocation-amount h-[46px] w-full rounded-b-lg border border-t-0 border-gray-200 bg-white ps-9 pe-3 text-sm text-gray-800 sm:rounded-s-none sm:rounded-e-lg sm:border-s-0 sm:border-t dark:bg-neutral-700 dark:border-neutral-700 dark:text-neutral-200" name="payment_allocations[${index}][amount]" value="${value}" placeholder="0.00">
+                            <input type="text" inputmode="decimal" class="allocation-amount h-[46px] w-full rounded-b-lg border border-t-0 border-gray-200 bg-white ps-9 pe-3 text-sm text-gray-800 sm:rounded-s-none sm:rounded-e-lg sm:border-s-0 sm:border-t dark:bg-neutral-700 dark:border-neutral-700 dark:text-neutral-200" name="payment_allocations[${index}][amount]" value="${escapePayHtml(formatPayMoneyInputWhileTyping(value))}" placeholder="0.00">
                             <div class="absolute inset-y-0 inset-s-0 flex items-center pointer-events-none ps-3">
                                 <span class="text-gray-500 dark:text-neutral-400">$</span>
                             </div>
@@ -606,7 +610,7 @@
                 const input = row.querySelector('.allocation-amount');
                 const remainingEl = row.querySelector('.budget-remaining');
                 const remaining = parseFloat(remainingEl.dataset.remaining || '0');
-                input.value = sanitizePayMoneyInput(input.value);
+                input.value = formatPayMoneyInputWhileTyping(input.value);
                 const value = checked ? parsePayMoneyInput(input.value) : 0;
 
                 input.disabled = !checked;
@@ -628,7 +632,7 @@
                 }
             });
 
-            document.getElementById('amount').value = total.toFixed(2);
+            document.getElementById('amount').value = formatPayMoneyInputWhileTyping(total.toFixed(2));
         }
 
         function formatMoney(value) {
@@ -637,6 +641,55 @@
 
         function parsePayMoneyInput(value) {
             return Number(normalizePayMoneyInput(value)) || 0;
+        }
+
+        function payMoneyInputParts(value) {
+            value = String(value || '').replace(/[^0-9,.]/g, '');
+
+            if (!value) {
+                return { integerPart: '', decimalPart: '', hasDecimal: false };
+            }
+
+            const lastComma = value.lastIndexOf(',');
+            const lastDot = value.lastIndexOf('.');
+            const separatorIndex = Math.max(lastComma, lastDot);
+            const separator = separatorIndex === -1 ? '' : value[separatorIndex];
+            const separatorCount = (value.match(/[,.]/g) || []).length;
+            const digitsAfterSeparator = separatorIndex === -1 ? 0 : value.length - separatorIndex - 1;
+            const hasDecimal = separatorIndex !== -1
+                && (
+                    value.endsWith(separator)
+                    || lastComma !== -1 && lastDot !== -1
+                    || separatorCount === 1 && digitsAfterSeparator <= 2
+                );
+
+            if (!hasDecimal) {
+                return {
+                    integerPart: value.replace(/[,.]/g, ''),
+                    decimalPart: '',
+                    hasDecimal: false,
+                };
+            }
+
+            return {
+                integerPart: value.slice(0, separatorIndex).replace(/[,.]/g, ''),
+                decimalPart: value.slice(separatorIndex + 1).replace(/[,.]/g, '').substring(0, 2),
+                hasDecimal: true,
+            };
+        }
+
+        function formatPayMoneyInputWhileTyping(value) {
+            const parts = payMoneyInputParts(value);
+
+            if (!parts.integerPart && !parts.hasDecimal) {
+                return '';
+            }
+
+            const integerPart = (parts.integerPart || '0')
+                .replace(/^0+(?=\d)/, '')
+                .replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+
+            return parts.hasDecimal ? `${integerPart}.${parts.decimalPart}` : integerPart;
         }
 
         function sanitizePayMoneyInput(value) {
@@ -655,25 +708,10 @@
         }
 
         function normalizePayMoneyInput(value) {
-            value = sanitizePayMoneyInput(value);
-            const lastComma = value.lastIndexOf(',');
-            const lastDot = value.lastIndexOf('.');
+            const parts = payMoneyInputParts(value);
+            const integerPart = parts.integerPart || '0';
 
-            if (lastComma !== -1 && lastDot !== -1) {
-                const decimalSeparator = lastComma > lastDot ? ',' : '.';
-                const thousandsSeparator = decimalSeparator === ',' ? '.' : ',';
-                return value.replaceAll(thousandsSeparator, '').replace(decimalSeparator, '.');
-            }
-
-            if (lastComma !== -1) {
-                return normalizePaySingleSeparatorMoney(value, ',');
-            }
-
-            if (lastDot !== -1) {
-                return normalizePaySingleSeparatorMoney(value, '.');
-            }
-
-            return value;
+            return parts.hasDecimal ? `${integerPart}.${parts.decimalPart}` : integerPart;
         }
 
         function normalizePaySingleSeparatorMoney(value, separator) {
@@ -747,7 +785,7 @@
                 clearSubproject() {
                     const el = document.querySelector('#subproject');
                     if (el) el.value = '';
-                    // si el HSSelect ya estaba creado, también lo resetea visualmente
+                    // si el HSSelect ya estaba creado, tambiÃ©n lo resetea visualmente
                     this.setHSSelectValue('#subproject', '');
                 },
 
