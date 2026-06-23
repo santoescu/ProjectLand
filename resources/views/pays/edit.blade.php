@@ -248,6 +248,16 @@
             @enderror
         </div>
 
+        <div id="contractCOBudgetAllocations" class="hidden space-y-3">
+            <label class="block text-base text-gray-700 dark:text-neutral-200">
+                {{ __('Change Orders') }}
+            </label>
+            <div id="contractCOBudgetRows" class="space-y-3"></div>
+            @error('change_order_allocations')
+            <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+            @enderror
+        </div>
+
         <div id="legacyChartAccountField" data-flux-field class="relative {{ $errors->has('chartAccount_id') ? 'error' : '' }}">
             <label for="chartAccount_id"  class="block text-base text-gray-700 dark:text-neutral-200">
                 {{ __('Budget Code') }}
@@ -315,6 +325,7 @@
     <script>
         window.payContractsForFront = @js($contractsForFront);
         window.oldPaymentAllocations = @js($oldAllocations);
+        window.oldCOAllocations = @js($pay->change_order_allocations ?? []);
 
         document.addEventListener('alpine:init', () => {
             Alpine.data('contractSelect', ({ contracts, initialContractorId, initialContractId }) => ({
@@ -459,15 +470,19 @@
 
             const section = document.getElementById('contractBudgetAllocations');
             const rows = document.getElementById('contractBudgetRows');
+            const coSection = document.getElementById('contractCOBudgetAllocations');
+            const coRows = document.getElementById('contractCOBudgetRows');
             const legacy = document.getElementById('legacyChartAccountField');
             const chartSelect = document.getElementById('chartAccount_id');
             const amountInput = document.getElementById('amount');
             const contract = window.payContractsForFront.find(item => item.id === contractId);
 
             rows.innerHTML = '';
+            coRows.innerHTML = '';
 
             if (!contract || !Array.isArray(contract.budgets) || contract.budgets.length === 0) {
                 section.classList.add('hidden');
+                coSection.classList.add('hidden');
                 legacy.classList.remove('hidden');
                 legacy.style.display = '';
                 chartSelect.disabled = false;
@@ -523,6 +538,52 @@
                 input.addEventListener('change', updatePaymentAllocationTotal);
             });
 
+            // Render CO budget allocations
+            const coBudgets = Array.isArray(contract.change_order_budgets) ? contract.change_order_budgets : [];
+            if (coBudgets.length > 0) {
+                coSection.classList.remove('hidden');
+                const oldCOByBudgetKey = Object.fromEntries((window.oldCOAllocations || []).filter(a => a.budget_key).map(a => [a.budget_key, a.amount]));
+
+                coBudgets.forEach((coBudget, index) => {
+                    const isNeg = coBudget.is_negative;
+                    const oldVal = oldCOByBudgetKey[coBudget.budget_key] ?? '';
+                    const isChecked = oldVal !== '' && parseFloat(oldVal) !== 0;
+                    const signedRemaining = isNeg ? -Math.abs(coBudget.remaining) : Math.abs(coBudget.remaining);
+                    const coInputValue = (isChecked && oldVal !== '') ? formatPayMoneyInputWhileTyping(String(Math.abs(parseFloat(oldVal)))) : '';
+
+                    coRows.insertAdjacentHTML('beforeend', `
+                        <div class="co-budget-row grid grid-cols-1 items-start sm:grid-cols-[46px_minmax(0,1fr)_240px]">
+                            <label for="co-allocation-${index}" class="flex h-[46px] items-center justify-center rounded-s-lg border border-gray-200 dark:border-neutral-700 ${isNeg ? 'bg-red-50 dark:bg-red-900/20' : 'bg-gray-50 dark:bg-neutral-800'}">
+                                <input id="co-allocation-${index}" type="checkbox" class="co-check shrink-0 size-4 bg-transparent border-gray-300 rounded-sm shadow-2xs text-blue-600 focus:ring-0 focus:ring-offset-0 checked:bg-blue-600 checked:border-blue-600 disabled:opacity-50 disabled:pointer-events-none dark:border-neutral-600" data-signed-remaining="${signedRemaining}" data-remaining="${Math.abs(coBudget.remaining)}" data-is-negative="${isNeg}" ${isChecked ? 'checked' : ''}>
+                            </label>
+                            <div>
+                                <input type="text" class="h-[46px] w-full rounded-none border border-t-0 border-gray-200 bg-white px-4 text-sm font-semibold ${isNeg ? 'text-red-600 dark:text-red-400' : 'text-gray-800 dark:text-neutral-100'} disabled:pointer-events-none disabled:bg-white disabled:text-gray-800 sm:border-s-0 sm:border-t dark:bg-neutral-700 dark:border-neutral-700 dark:disabled:bg-neutral-700 dark:disabled:text-neutral-100" value="${escapePayHtml(coBudget.name)}" disabled>
+                                <span class="co-remaining mt-1 block text-sm text-gray-500 dark:text-neutral-400" data-remaining="${Math.abs(coBudget.remaining)}">
+                                    ${isNeg ? '{{ __("Reduces payment by") }}' : '{{ __("Adds to payment") }}'}: ${formatMoney(Math.abs(coBudget.remaining))}
+                                </span>
+                            </div>
+                            <div class="relative h-[46px]">
+                                <input type="text" inputmode="decimal" class="co-allocation-amount h-[46px] w-full rounded-b-lg border border-t-0 border-gray-200 bg-white ps-9 pe-3 text-sm text-gray-800 sm:rounded-s-none sm:rounded-e-lg sm:border-s-0 sm:border-t dark:bg-neutral-700 dark:border-neutral-700 dark:text-neutral-200" placeholder="0.00" value="${escapePayHtml(coInputValue)}" ${isChecked ? '' : 'disabled'}>
+                                <div class="absolute inset-y-0 inset-s-0 flex items-center pointer-events-none ps-3">
+                                    <span class="text-gray-500 dark:text-neutral-400">$</span>
+                                </div>
+                            </div>
+                            <input type="hidden" class="co-amount-hidden" name="change_order_allocations[${index}][amount]" value="${isChecked ? signedRemaining : ''}">
+                            <input type="hidden" name="change_order_allocations[${index}][chartAccount_id]" value="${escapePayHtml(coBudget.chartAccount_id)}">
+                            <input type="hidden" name="change_order_allocations[${index}][budget_key]" value="${escapePayHtml(coBudget.budget_key)}">
+                            <input type="hidden" name="change_order_allocations[${index}][concept]" value="${escapePayHtml(coBudget.concept ?? '')}">
+                        </div>
+                    `);
+                });
+
+                coRows.querySelectorAll('.co-check, .co-allocation-amount').forEach(input => {
+                    input.addEventListener('input', updatePaymentAllocationTotal);
+                    input.addEventListener('change', updatePaymentAllocationTotal);
+                });
+            } else {
+                coSection.classList.add('hidden');
+            }
+
             updatePaymentAllocationTotal();
         }
 
@@ -553,7 +614,41 @@
                 }
             });
 
-            document.getElementById('amount').value = formatPayMoneyInputWhileTyping(total.toFixed(2));
+            document.querySelectorAll('#contractCOBudgetRows .co-budget-row').forEach(row => {
+                const checkbox = row.querySelector('.co-check');
+                const hiddenAmount = row.querySelector('.co-amount-hidden');
+                const amountInput = row.querySelector('.co-allocation-amount');
+                const remainingEl = row.querySelector('.co-remaining');
+                const isNegative = checkbox.dataset.isNegative === 'true';
+                const remaining = parseFloat(checkbox.dataset.remaining || '0');
+                const label = isNegative ? '{{ __("Reduces payment by") }}' : '{{ __("Adds to payment") }}';
+
+                amountInput.disabled = !checkbox.checked;
+
+                if (!checkbox.checked) {
+                    amountInput.value = '';
+                    hiddenAmount.value = '';
+                } else {
+                    amountInput.value = formatPayMoneyInputWhileTyping(amountInput.value);
+
+                    const enteredAbs = parsePayMoneyInput(amountInput.value);
+                    const signedAmount = isNegative ? -enteredAbs : enteredAbs;
+                    hiddenAmount.value = enteredAbs > 0 ? signedAmount : '';
+                    total += signedAmount;
+
+                    if (enteredAbs > remaining + 0.001) {
+                        remainingEl.classList.remove('text-gray-500', 'dark:text-neutral-400');
+                        remainingEl.classList.add('text-red-600', 'dark:text-red-400');
+                        remainingEl.textContent = `${label}: ${formatMoney(remaining)} - {{ __('Exceeded') }}`;
+                    } else {
+                        remainingEl.classList.remove('text-red-600', 'dark:text-red-400');
+                        remainingEl.classList.add('text-gray-500', 'dark:text-neutral-400');
+                        remainingEl.textContent = `${label}: ${formatMoney(remaining)}`;
+                    }
+                }
+            });
+
+            document.getElementById('amount').value = formatPayMoneyInputWhileTyping(Math.max(total, 0).toFixed(2));
         }
 
         function formatMoney(value) {

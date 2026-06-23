@@ -22,8 +22,15 @@ class PayController extends Controller
 
         $query = Pay::with('project', 'contractor', 'chartAccount');
 
-        if (!is_null($request->status) && $request->status !== '') {
-            $query->where('status', (int) $request->status);
+        if ($request->has('filter_applied')) {
+            $statuses = array_map('intval', $request->input('statuses', []));
+            if (!empty($statuses)) {
+                $query->whereIn('status', $statuses);
+            } else {
+                $query->where('status', '!=', 2);
+            }
+        } else {
+            $query->where('status', '!=', 2);
         }
         if (!is_null($effectiveProjectId) && $effectiveProjectId !== '') {
             $query->where('project_id', $effectiveProjectId);
@@ -72,6 +79,11 @@ class PayController extends Controller
             'payment_allocations.*.budget_key' => 'nullable|string',
             'payment_allocations.*.concept' => 'nullable|string',
             'payment_allocations.*.amount' => 'nullable|numeric|min:0',
+            'change_order_allocations' => 'nullable|array',
+            'change_order_allocations.*.chartAccount_id' => 'nullable|string',
+            'change_order_allocations.*.budget_key' => 'nullable|string',
+            'change_order_allocations.*.concept' => 'nullable|string',
+            'change_order_allocations.*.amount' => 'nullable|numeric',
             'amount' => 'required|numeric|min:0',
             'description' => 'nullable|string',
             'attachment_link' => 'nullable|url',
@@ -142,6 +154,11 @@ class PayController extends Controller
             'payment_allocations.*.budget_key' => 'nullable|string',
             'payment_allocations.*.concept' => 'nullable|string',
             'payment_allocations.*.amount' => 'nullable|numeric|min:0',
+            'change_order_allocations' => 'nullable|array',
+            'change_order_allocations.*.chartAccount_id' => 'nullable|string',
+            'change_order_allocations.*.budget_key' => 'nullable|string',
+            'change_order_allocations.*.concept' => 'nullable|string',
+            'change_order_allocations.*.amount' => 'nullable|numeric',
             'amount' => 'required|numeric|min:0',
             'description' => 'nullable|string',
             'attachment_link' => 'nullable|url',
@@ -297,6 +314,11 @@ class PayController extends Controller
             'payment_allocations.*.budget_key' => 'nullable|string',
             'payment_allocations.*.concept' => 'nullable|string',
             'payment_allocations.*.amount' => 'nullable|numeric|min:0',
+            'change_order_allocations' => 'nullable|array',
+            'change_order_allocations.*.chartAccount_id' => 'nullable|string',
+            'change_order_allocations.*.budget_key' => 'nullable|string',
+            'change_order_allocations.*.concept' => 'nullable|string',
+            'change_order_allocations.*.amount' => 'nullable|numeric',
             'amount' => 'required|numeric|min:0',
             'description' => 'nullable|string',
             'attachment_link' => 'nullable|url',
@@ -516,7 +538,60 @@ class PayController extends Controller
 
         $data['payment_allocations'] = $allocations->all();
         $data['chartAccount_id'] = $allocations->first()['chartAccount_id'];
-        $data['amount'] = $allocations->sum('amount');
+
+        // Process Change Order allocations
+        $coBudgetByKey = collect($contract->change_order_budgets ?? [])
+            ->mapWithKeys(fn ($budget) => [
+                $this->coKey((string) ($budget['chartAccount_id'] ?? ''), (string) ($budget['concept'] ?? '')) => (float) ($budget['budget'] ?? 0),
+            ]);
+
+        $existingCOAllocationByKey = $payId
+            ? collect(Pay::find($payId)?->change_order_allocations ?? [])
+                ->mapWithKeys(fn ($a) => [
+                    (string) ($a['budget_key'] ?? '') ?: $this->coKey((string) ($a['chartAccount_id'] ?? ''), (string) ($a['concept'] ?? '')) => (float) ($a['amount'] ?? 0),
+                ])
+            : collect();
+
+        $coAllocations = collect($data['change_order_allocations'] ?? [])
+            ->filter(fn ($a) => filled($a['chartAccount_id'] ?? null) && (float) ($a['amount'] ?? 0) != 0)
+            ->map(function ($a) {
+                $budgetKey = (string) ($a['budget_key'] ?? '') ?: $this->coKey((string) ($a['chartAccount_id'] ?? ''), (string) ($a['concept'] ?? ''));
+                return [
+                    'chartAccount_id' => (string) ($a['chartAccount_id'] ?? ''),
+                    'concept' => trim((string) ($a['concept'] ?? '')),
+                    'budget_key' => $budgetKey,
+                    'amount' => (float) ($a['amount'] ?? 0),
+                ];
+            })
+            ->values();
+
+        foreach ($coAllocations as $coAllocation) {
+            $budgetKey = $coAllocation['budget_key'];
+
+            if (!$coBudgetByKey->has($budgetKey)) {
+                throw ValidationException::withMessages([
+                    'change_order_allocations' => __('The selected budget code is not assigned to the selected contract.'),
+                ]);
+            }
+
+            $coBudget = $coBudgetByKey[$budgetKey];
+            $coBudgetAbs = abs($coBudget);
+            $coSpent = $this->spentForContractCOBudget((string) $contract->_id, $budgetKey, $payId);
+            $coSpentAbs = abs($coSpent);
+            $coRemaining = $coBudgetAbs - $coSpentAbs;
+            $existingForThisKey = abs((float) ($existingCOAllocationByKey[$budgetKey] ?? 0));
+            $availableForThisPay = $coRemaining + $existingForThisKey;
+            $allocationAbs = abs($coAllocation['amount']);
+
+            if ($allocationAbs > $availableForThisPay + 0.001) {
+                throw ValidationException::withMessages([
+                    'change_order_allocations' => __('The payment exceeds the available budget.'),
+                ]);
+            }
+        }
+
+        $data['change_order_allocations'] = $coAllocations->all();
+        $data['amount'] = $allocations->sum('amount') + $coAllocations->sum('amount');
 
         return $data;
     }
@@ -583,6 +658,25 @@ class PayController extends Controller
                 ];
             })->values();
 
+            $coBudgets = collect($contract->change_order_budgets ?? [])->map(function ($budget) use ($contract, $chartAccountNames, $excludePayId) {
+                $chartAccountId = (string) ($budget['chartAccount_id'] ?? '');
+                $budgetKey = $this->coKey($chartAccountId, (string) ($budget['concept'] ?? ''));
+                $budgetAmount = (float) ($budget['budget'] ?? 0);
+                $spent = $this->spentForContractCOBudget((string) $contract->_id, $budgetKey, $excludePayId);
+                $remaining = abs($budgetAmount) - $spent;
+
+                return [
+                    'chartAccount_id' => $chartAccountId,
+                    'budget_key' => $budgetKey,
+                    'name' => trim(($chartAccountNames[$chartAccountId] ?? '') . (filled($budget['concept'] ?? null) ? ' - ' . $budget['concept'] : '')),
+                    'budget' => $budgetAmount,
+                    'spent' => $spent,
+                    'remaining' => $remaining,
+                    'concept' => trim((string) ($budget['concept'] ?? '')),
+                    'is_negative' => $budgetAmount < 0,
+                ];
+            })->values();
+
             return [
                 'id' => (string) $contract->_id,
                 'name' => $contract->name,
@@ -590,6 +684,7 @@ class PayController extends Controller
                 'project_id' => (string) ($contract->project_id ?? ''),
                 'subproject' => (string) ($contract->subproject ?? ''),
                 'budgets' => $budgets,
+                'change_order_budgets' => $coBudgets,
             ];
         })->values();
     }
@@ -629,6 +724,26 @@ class PayController extends Controller
         return $chartAccountId . '|' . strtolower(trim($concept));
     }
 
+    private function coKey(string $chartAccountId, string $concept = ''): string
+    {
+        return 'co:' . $chartAccountId . '|' . strtolower(trim($concept));
+    }
+
+    private function spentForContractCOBudget(string $contractId, string $budgetKey, ?string $excludePayId = null): float
+    {
+        $query = Pay::where('contract_id', $contractId)->where('status', '!=', 1);
+
+        if ($excludePayId) {
+            $query->where('_id', '!=', $excludePayId);
+        }
+
+        return $query->get()->sum(function ($pay) use ($budgetKey) {
+            return collect($pay->change_order_allocations ?? [])
+                ->sum(fn ($a) => (string) ($a['budget_key'] ?? '') === $budgetKey
+                    ? abs((float) ($a['amount'] ?? 0)) : 0);
+        });
+    }
+
     private function syncContractBudgetUsage(?string $contractId): void
     {
         if (!$contractId) {
@@ -657,7 +772,26 @@ class PayController extends Controller
             ];
         })->values()->all();
 
-        $contract->update(['contract_budgets' => $budgets]);
+        $coBudgets = collect($contract->change_order_budgets ?? [])->map(function ($budget) use ($contract) {
+            $chartAccountId = (string) ($budget['chartAccount_id'] ?? '');
+            $budgetKey = $this->coKey($chartAccountId, (string) ($budget['concept'] ?? ''));
+            $budgetAmount = (float) ($budget['budget'] ?? 0);
+            $spent = $this->spentForContractCOBudget((string) $contract->_id, $budgetKey);
+
+            return [
+                'chartAccount_id' => $chartAccountId,
+                'budget_key' => $budgetKey,
+                'budget' => $budgetAmount,
+                'spent' => $spent,
+                'remaining' => $budgetAmount - $spent,
+                'concept' => trim((string) ($budget['concept'] ?? '')),
+            ];
+        })->values()->all();
+
+        $contract->update([
+            'contract_budgets' => $budgets,
+            'change_order_budgets' => $coBudgets,
+        ]);
     }
 
 

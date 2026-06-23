@@ -124,7 +124,36 @@ class ContractController extends Controller
             ];
         })->values();
 
-        return compact('payments', 'budgetRows');
+        $coBudgetRows = collect($contract->change_order_budgets ?? [])->map(function ($budget) use ($chartAccounts, $payments) {
+            $chartAccountId = (string) ($budget['chartAccount_id'] ?? '');
+            $concept = trim((string) ($budget['concept'] ?? ''));
+            $budgetKey = $this->coKey($chartAccountId, $concept);
+            $budgetAmount = (float) ($budget['budget'] ?? 0);
+
+            $paymentAmounts = $payments->mapWithKeys(function ($pay) use ($budgetKey) {
+                $allocations = collect($pay->change_order_allocations ?? []);
+                $amount = $allocations->sum(function ($allocation) use ($budgetKey) {
+                    return (string) ($allocation['budget_key'] ?? '') === $budgetKey
+                        ? (float) ($allocation['amount'] ?? 0) : 0;
+                });
+                return [(string) $pay->_id => $amount];
+            });
+
+            $spent = $paymentAmounts->sum();
+
+            return [
+                'chartAccount_id' => $chartAccountId,
+                'budget_key' => $budgetKey,
+                'chartAccount_name' => $chartAccounts->get($chartAccountId)?->name ?? '',
+                'concept' => $concept,
+                'budget' => $budgetAmount,
+                'spent' => $spent,
+                'remaining' => $budgetAmount - $spent,
+                'payments' => $paymentAmounts,
+            ];
+        })->values();
+
+        return compact('payments', 'budgetRows', 'coBudgetRows');
     }
 
     /**
@@ -184,7 +213,15 @@ class ContractController extends Controller
             ->values()
             ->all();
 
-        $request->merge(['contract_budgets' => $budgets]);
+        $changeOrderBudgets = collect($request->input('change_order_budgets', []))
+            ->filter(fn ($budget) => filled($budget['chartAccount_id'] ?? null) || filled($budget['budget'] ?? null))
+            ->values()
+            ->all();
+
+        $request->merge([
+            'contract_budgets' => $budgets,
+            'change_order_budgets' => $changeOrderBudgets,
+        ]);
 
         $data = $request->validate([
             'name' => 'required|string|max:255',
@@ -195,6 +232,10 @@ class ContractController extends Controller
             'contract_budgets.*.chartAccount_id' => 'required|string',
             'contract_budgets.*.budget' => 'required|numeric|min:0',
             'contract_budgets.*.concept' => 'nullable|string|max:255',
+            'change_order_budgets' => 'nullable|array',
+            'change_order_budgets.*.chartAccount_id' => 'required_with:change_order_budgets.*|string',
+            'change_order_budgets.*.budget' => 'required_with:change_order_budgets.*|numeric',
+            'change_order_budgets.*.concept' => 'nullable|string|max:255',
         ]);
 
         if (!Project::active()->find($data['project_id'])) {
@@ -245,7 +286,48 @@ class ContractController extends Controller
             ])
             ->values()
             ->all();
-        $data['compensation'] = collect($data['contract_budgets'])->sum('budget');
+
+        $changeOrderBudgetsData = $data['change_order_budgets'] ?? [];
+
+        if (!empty($changeOrderBudgetsData)) {
+            $duplicateCOAccountIds = collect($changeOrderBudgetsData)
+                ->groupBy(fn ($budget) => (string) ($budget['chartAccount_id'] ?? ''))
+                ->filter(fn ($budgets, $chartAccountId) => filled($chartAccountId) && $budgets->count() > 1)
+                ->keys();
+
+            if ($duplicateCOAccountIds->isNotEmpty()) {
+                foreach ($changeOrderBudgetsData as $budget) {
+                    $chartAccountId = (string) ($budget['chartAccount_id'] ?? '');
+
+                    if ($duplicateCOAccountIds->contains($chartAccountId) && blank($budget['concept'] ?? null)) {
+                        throw ValidationException::withMessages([
+                            'change_order_budgets' => __('The concept field is required when the budget code is repeated.'),
+                        ]);
+                    }
+                }
+
+                $repeatedCOKeys = collect($changeOrderBudgetsData)
+                    ->map(fn ($budget) => (string) ($budget['chartAccount_id'] ?? '') . '|' . strtolower(trim((string) ($budget['concept'] ?? ''))));
+
+                if ($repeatedCOKeys->duplicates()->isNotEmpty()) {
+                    throw ValidationException::withMessages([
+                        'change_order_budgets' => __('The same budget code cannot use the same concept more than once.'),
+                    ]);
+                }
+            }
+        }
+
+        $data['change_order_budgets'] = collect($changeOrderBudgetsData)
+            ->map(fn ($budget) => [
+                'chartAccount_id' => (string) $budget['chartAccount_id'],
+                'budget' => (float) $budget['budget'],
+                'concept' => trim((string) ($budget['concept'] ?? '')),
+            ])
+            ->values()
+            ->all();
+
+        $data['compensation'] = collect($data['contract_budgets'])->sum('budget')
+            + collect($data['change_order_budgets'])->sum('budget');
 
         return $data;
     }
@@ -288,7 +370,39 @@ class ContractController extends Controller
             ];
         })->values()->all();
 
-        $contract->update(['contract_budgets' => $budgets]);
+        $coBudgets = collect($contract->change_order_budgets ?? [])->map(function ($budget) use ($contract) {
+            $chartAccountId = (string) ($budget['chartAccount_id'] ?? '');
+            $concept = trim((string) ($budget['concept'] ?? ''));
+            $budgetKey = $this->coKey($chartAccountId, $concept);
+            $budgetAmount = (float) ($budget['budget'] ?? 0);
+            $spent = $this->spentForContractCOBudget((string) $contract->_id, $budgetKey);
+
+            return [
+                'chartAccount_id' => $chartAccountId,
+                'budget_key' => $budgetKey,
+                'budget' => $budgetAmount,
+                'spent' => $spent,
+                'remaining' => $budgetAmount - $spent,
+                'concept' => $concept,
+            ];
+        })->values()->all();
+
+        $contract->update([
+            'contract_budgets' => $budgets,
+            'change_order_budgets' => $coBudgets,
+        ]);
+    }
+
+    private function spentForContractCOBudget(string $contractId, string $budgetKey): float
+    {
+        return Pay::where('contract_id', $contractId)
+            ->where('status', '!=', 1)
+            ->get()
+            ->sum(function ($pay) use ($budgetKey) {
+                return collect($pay->change_order_allocations ?? [])
+                    ->sum(fn ($a) => (string) ($a['budget_key'] ?? '') === $budgetKey
+                        ? (float) ($a['amount'] ?? 0) : 0);
+            });
     }
 
     private function spentForContractBudget(string $contractId, string $chartAccountId, ?string $budgetKey = null): float
@@ -321,5 +435,10 @@ class ContractController extends Controller
     private function budgetKey(string $chartAccountId, string $concept = ''): string
     {
         return $chartAccountId . '|' . strtolower(trim($concept));
+    }
+
+    private function coKey(string $chartAccountId, string $concept = ''): string
+    {
+        return 'co:' . $chartAccountId . '|' . strtolower(trim($concept));
     }
 }

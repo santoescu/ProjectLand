@@ -21,9 +21,18 @@
 
                         <div class="flex items-center gap-5">
 
+                            @php
+                                $activeStatuses = request()->has('filter_applied')
+                                    ? array_map('strval', request('statuses', []))
+                                    : ['0', '1', '3'];
+                            @endphp
+
                             @if (!filled(data_get($selectedProject ?? null, 'id')))
                                 <form method="GET" action="{{ route('pays.index') }}">
-                                    <input type="hidden" name="status" value="{{ request('status') }}">
+                                    <input type="hidden" name="filter_applied" value="1">
+                                    @foreach($activeStatuses as $s)
+                                        <input type="hidden" name="statuses[]" value="{{ $s }}">
+                                    @endforeach
 
                                     <flux:select name="project_id" onchange="this.form.submit()" class="border rounded px-2 py-1">
                                         <option value="">{{ __("Project-All") }}</option>
@@ -35,16 +44,36 @@
                                     </flux:select>
                                 </form>
                             @endif
-                            <form method="GET" action="{{ route('pays.index') }}">
-                                <input type="hidden" name="project_id" value="{{ $effectiveProjectId }}">
 
-                                <flux:select name="status" onchange="this.form.submit()" class="border rounded px-2 py-1">
-                                    <option value="">{{ __("Status-All") }}</option>
-                                    <option value="0" {{ request('status') === '0' ? 'selected' : '' }}>{{ __("Pending") }}</option>
-                                    <option value="1" {{ request('status') === '1' ? 'selected' : '' }}>{{ __("Rejected") }}</option>
-                                    <option value="2" {{ request('status') === '2' ? 'selected' : '' }}>{{ __("Paid") }}</option>
-                                    <option value="3" {{ request('status') === '3' ? 'selected' : '' }}>{{ __("Approved") }}</option>
-                                </flux:select>
+                            <form method="GET" action="{{ route('pays.index') }}" id="status-filter-form">
+                                <input type="hidden" name="project_id" value="{{ $effectiveProjectId }}">
+                                <input type="hidden" name="filter_applied" value="1">
+
+                                <div class="flex items-center gap-2">
+                                <div class="w-52">
+                                    <select id="pay-status-select" name="statuses[]" multiple
+                                            data-hs-select='{
+                                              "placeholder": "{{ __('Status') }}...",
+                                              "toggleTag": "<button type=\"button\" aria-expanded=\"false\"></button>",
+                                              "toggleClasses": "hs-select-disabled:pointer-events-none hs-select-disabled:opacity-50 relative h-10 pl-3 pr-9 flex items-center text-nowrap w-full cursor-pointer bg-white dark:bg-white/10 border border-zinc-200 border-b-zinc-300/80 dark:border-white/10 shadow-xs text-zinc-700 dark:text-zinc-300 rounded-lg text-start text-sm hover:bg-zinc-50 dark:hover:bg-white/[15%] focus:outline-hidden",
+                                              "toggleSeparators": { "betweenItemsAndCounter": " &" },
+                                              "toggleCountText": "+",
+                                              "toggleCountTextPlacement": "prefix-no-space",
+                                              "toggleCountTextMinItems": 3,
+                                              "toggleCountTextMode": "nItemsAndCount",
+                                              "dropdownClasses": "absolute z-50 w-full max-h-60 p-1 space-y-0.5 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 rounded-lg shadow-lg overflow-y-auto",
+                                              "optionClasses": "py-2 px-3 w-full text-sm text-zinc-700 dark:text-zinc-300 cursor-pointer hover:bg-zinc-100 dark:hover:bg-white/10 rounded-lg",
+                                              "optionTemplate": "<div class=\"flex justify-between items-center w-full\"><span data-title></span><span class=\"hidden hs-selected:block\"><svg class=\"shrink-0 size-3.5 text-zinc-700 dark:text-zinc-300\" xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><polyline points=\"20 6 9 17 4 12\"/></svg></span></div>",
+                                              "extraMarkup": "<div class=\"absolute top-1/2 right-3 -translate-y-1/2 pointer-events-none\"><svg class=\"shrink-0 size-3.5 text-zinc-400\" xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"m7 15 5 5 5-5\"/><path d=\"m7 9 5-5 5 5\"/></svg></div>"
+                                            }'
+                                            class="hidden">
+                                        <option value="0" {{ in_array('0', $activeStatuses) ? 'selected' : '' }}>{{ __('Pending') }}</option>
+                                        <option value="1" {{ in_array('1', $activeStatuses) ? 'selected' : '' }}>{{ __('Rejected') }}</option>
+                                        <option value="2" {{ in_array('2', $activeStatuses) ? 'selected' : '' }}>{{ __('Paid') }}</option>
+                                        <option value="3" {{ in_array('3', $activeStatuses) ? 'selected' : '' }}>{{ __('Approved') }}</option>
+                                    </select>
+                                </div>
+                                </div>
                             </form>
 
                             @unless($selectedProjectIsInactive)
@@ -346,6 +375,79 @@
 
     @push('scripts')
         <script>
+            function applyStatusFilter() {
+                const form   = document.getElementById('status-filter-form');
+                const select = document.getElementById('pay-status-select');
+                if (!form || !select) { console.warn('applyStatusFilter: form or select not found'); return; }
+
+                const selected = Array.from(select.selectedOptions).map(function (o) { return o.value; });
+                console.log('applyStatusFilter selected values:', selected);
+
+                const url = new URL(form.action, window.location.origin);
+                url.searchParams.set('filter_applied', '1');
+                const projectInput = form.querySelector('input[name="project_id"]');
+                if (projectInput && projectInput.value) {
+                    url.searchParams.set('project_id', projectInput.value);
+                }
+                selected.forEach(function (v) { url.searchParams.append('statuses[]', v); });
+
+                console.log('navigating to:', url.toString());
+                window.location.href = url.toString();
+            }
+
+            (function () {
+                let pollInterval = null;
+
+                function initStatusFilter() {
+                    clearInterval(pollInterval);
+
+                    setTimeout(function () {
+                        const form    = document.getElementById('status-filter-form');
+                        const select  = document.getElementById('pay-status-select');
+                        const wrapper = form && form.querySelector('.w-52');
+                        const btn     = wrapper && wrapper.querySelector('button');
+
+                        if (!btn || !select || !wrapper) return;
+
+                        function getSelected() {
+                            return Array.from(select.selectedOptions).map(function (o) { return o.value; }).sort().join(',');
+                        }
+
+                        let lastValues = getSelected();
+                        let applyTimer;
+
+                        pollInterval = setInterval(function () {
+                            const current = getSelected();
+                            if (current !== lastValues) {
+                                lastValues = current;
+                                clearTimeout(applyTimer);
+                                applyTimer = setTimeout(applyStatusFilter, 600);
+                            }
+                        }, 300);
+
+                        // Reposicionar dropdown con position:fixed al abrir
+                        const dropdown = btn.nextElementSibling;
+                        function reposition() {
+                            if (!dropdown || dropdown.tagName !== 'DIV') return;
+                            const rect = btn.getBoundingClientRect();
+                            dropdown.style.position = 'fixed';
+                            dropdown.style.width    = rect.width + 'px';
+                            dropdown.style.left     = rect.left + 'px';
+                            dropdown.style.top      = (rect.bottom + 4) + 'px';
+                            dropdown.style.bottom   = 'auto';
+                            dropdown.style.margin   = '0';
+                        }
+
+                        btn.addEventListener('click', function () { setTimeout(reposition, 10); });
+                    }, 400);
+                }
+
+                // Carga inicial (recarga completa)
+                document.addEventListener('DOMContentLoaded', initStatusFilter);
+                // Navegación SPA de Livewire (wire:navigate) — DOMContentLoaded no vuelve a disparar
+                document.addEventListener('livewire:navigated', initStatusFilter);
+            })();
+
             function openDeleteModal(pay) {
                 if (window.HSOverlay) {
                     HSOverlay.autoInit();

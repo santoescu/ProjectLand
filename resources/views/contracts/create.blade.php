@@ -199,6 +199,57 @@
             @enderror
         </div>
 
+        {{-- Change Order Budgets --}}
+        @php
+            $oldCOBudgets = old('change_order_budgets', []);
+        @endphp
+        <div class="space-y-3">
+            <div class="flex items-center justify-between gap-3">
+                <label class="block text-base text-gray-700 dark:text-neutral-200">
+                    {{ __('Change Order') }} / {{ __('Concept') }} / {{ __('Budget') }}
+                </label>
+                <button type="button"
+                        onclick="addCOBudgetRow()"
+                        class="py-1.5 px-2 inline-flex items-center gap-x-1 text-xs font-medium rounded-full border border-dashed border-gray-200 bg-white text-gray-800 hover:bg-gray-50 focus:outline-hidden focus:bg-gray-50 disabled:opacity-50 disabled:pointer-events-none dark:bg-neutral-700 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-700 dark:focus:bg-neutral-700">
+                    <svg class="shrink-0 size-3.5" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M5 12h14"></path>
+                        <path d="M12 5v14"></path>
+                    </svg>
+                    {{ __('Add') }}
+                </button>
+            </div>
+
+            <div id="coBudgetRows" class="space-y-3">
+                @foreach($oldCOBudgets as $index => $budget)
+                    <div class="budget-row grid grid-cols-1 items-start">
+                        <select name="change_order_budgets[{{ $index }}][chartAccount_id]" class="co-budget-account hidden" data-hs-select='@json($budgetSelectConfig)'>
+                            <option value=""></option>
+                            @foreach($chartAccounts as $chartAccount)
+                                <option value="{{ $chartAccount->_id }}" {{ ($budget['chartAccount_id'] ?? '') == $chartAccount->_id ? 'selected' : '' }}>{{ $chartAccount->name }}</option>
+                            @endforeach
+                        </select>
+                        <input type="text" name="change_order_budgets[{{ $index }}][concept]" value="{{ $budget['concept'] ?? '' }}" class="co-budget-concept h-[46px] w-full rounded-none border border-t-0 border-gray-200 bg-white px-3 text-sm text-gray-800 focus:z-10 focus:border-blue-500 focus:ring-blue-500 disabled:pointer-events-none disabled:bg-white disabled:text-gray-800 sm:border-s-0 sm:border-t sm:border-e-0 dark:bg-neutral-700 dark:border-neutral-700 dark:text-neutral-200 dark:disabled:bg-neutral-700 dark:disabled:text-neutral-200" disabled>
+                        <div class="budget-amount-wrap relative h-[46px]">
+                            <input type="text" inputmode="text" name="change_order_budgets[{{ $index }}][budget]" value="{{ $budget['budget'] ?? '' }}" class="co-budget-amount h-[46px] w-full rounded-none border border-t-0 border-gray-200 bg-white ps-9 pe-3 text-sm text-gray-800 focus:z-10 focus:border-blue-500 focus:ring-blue-500 sm:border-t dark:bg-neutral-700 dark:border-neutral-700 dark:text-neutral-200" placeholder="0.00">
+                            <div class="absolute inset-y-0 inset-s-0 flex items-center pointer-events-none ps-3">
+                                <span class="text-gray-500 dark:text-neutral-400">$</span>
+                            </div>
+                        </div>
+                        <button type="button" class="h-[46px] rounded-b-lg border border-t-0 border-gray-200 text-gray-700 hover:bg-gray-50 sm:rounded-s-none sm:rounded-e-lg sm:border-t sm:border-s-0 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-700" onclick="removeCOBudgetRow(this)">X</button>
+                    </div>
+                @endforeach
+            </div>
+            @error('change_order_budgets')
+            <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+            @enderror
+            @error('change_order_budgets.*.chartAccount_id')
+            <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+            @enderror
+            @error('change_order_budgets.*.budget')
+            <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+            @enderror
+        </div>
+
         <div class="flex justify-end gap-2">
             <flux:button type="submit" variant="primary">{{__('Save')}}</flux:button>
 
@@ -495,10 +546,18 @@
         }
 
         function updateCompensationFromBudgets() {
-            const total = Array.from(document.querySelectorAll('#budgetRows .budget-amount'))
-                .reduce((sum, budgetInput) => sum + parseMoneyInput(budgetInput.value), 0);
+            const budgetTotal = Array.from(document.querySelectorAll('#budgetRows .budget-amount'))
+                .reduce((sum, input) => sum + parseMoneyInput(input.value), 0);
 
-            document.getElementById('compensation').value = formatMoneyForInput(total);
+            const coTotal = Array.from(document.querySelectorAll('#coBudgetRows .co-budget-amount'))
+                .reduce((sum, input) => {
+                    const str = input.value.trim();
+                    const isNeg = str.startsWith('-');
+                    const abs = parseMoneyInput(str.replace(/^-/, ''));
+                    return sum + (isNeg ? -abs : abs);
+                }, 0);
+
+            document.getElementById('compensation').value = formatMoneyForInput(budgetTotal + coTotal);
         }
 
         document.addEventListener('alpine:init', () => {
@@ -513,6 +572,18 @@
             document.getElementById('budgetRows')?.addEventListener('change', function(event) {
                 if (event.target.classList.contains('budget-account')) {
                     updateDuplicateConceptFields('#budgetRows');
+                }
+            });
+            document.getElementById('coBudgetRows')?.addEventListener('input', function(event) {
+                if (event.target.classList.contains('co-budget-amount')) {
+                    event.target.value = formatCOMoneyInputWhileTyping(event.target.value);
+                    updateCompensationFromBudgets();
+                }
+            });
+            document.getElementById('coBudgetRows')?.addEventListener('change', function(event) {
+                if (event.target.classList.contains('co-budget-account')) {
+                    updateCODuplicateConceptFields();
+                    updateCompensationFromBudgets();
                 }
             });
             updateDuplicateConceptFields('#budgetRows');
@@ -552,7 +623,124 @@
                 document.querySelectorAll('.budget-amount').forEach((budgetInput) => {
                     budgetInput.value = normalizeMoneyInput(budgetInput.value);
                 });
+                document.querySelectorAll('.co-budget-amount').forEach((budgetInput) => {
+                    budgetInput.value = normalizeCOMoneyInput(budgetInput.value);
+                });
+            });
+
+            document.getElementById('coBudgetRows')?.addEventListener('input', function(event) {
+                if (event.target.classList.contains('co-budget-amount')) {
+                    event.target.value = formatCOMoneyInputWhileTyping(event.target.value);
+                }
+            });
+            document.getElementById('coBudgetRows')?.addEventListener('change', function(event) {
+                if (event.target.classList.contains('co-budget-account')) {
+                    updateCODuplicateConceptFields();
+                }
+            });
+            updateCODuplicateConceptFields();
+            document.querySelectorAll('#coBudgetRows .co-budget-amount').forEach((budgetInput) => {
+                budgetInput.value = formatCOMoneyInputWhileTyping(budgetInput.value);
             });
         });
+
+        function parseCOMoneyInput(value) {
+            const str = String(value || '');
+            const isNeg = str.trimStart().startsWith('-');
+            const abs = Number(normalizeMoneyInput(str.replace(/^-/, ''))) || 0;
+            return isNeg ? -abs : abs;
+        }
+
+        function normalizeCOMoneyInput(value) {
+            const str = String(value || '');
+            const isNeg = str.trimStart().startsWith('-');
+            const abs = normalizeMoneyInput(str.replace(/^-/, ''));
+            return isNeg ? '-' + abs : abs;
+        }
+
+        function formatCOMoneyInputWhileTyping(value) {
+            const str = String(value || '');
+            const isNeg = str.trimStart().startsWith('-');
+            const absStr = str.replace(/^-/, '');
+            const formatted = formatMoneyInputWhileTyping(absStr);
+            if (!formatted) return isNeg ? '-' : '';
+            return isNeg ? '-' + formatted : formatted;
+        }
+
+        function addCOBudgetRow() {
+            const rows = document.getElementById('coBudgetRows');
+            const index = rows.querySelectorAll('.budget-row').length;
+            const options = chartAccountOptions
+                .map(account => `<option value="${escapeHtml(account.id)}">${escapeHtml(account.name)}</option>`)
+                .join('');
+
+            rows.insertAdjacentHTML('beforeend', `
+                <div class="budget-row grid grid-cols-1 items-start">
+                    <select name="change_order_budgets[${index}][chartAccount_id]" class="co-budget-account hidden">
+                        <option value=""></option>${options}
+                    </select>
+                    <input type="text" name="change_order_budgets[${index}][concept]" class="co-budget-concept h-[46px] w-full rounded-none border border-t-0 border-gray-200 bg-white px-3 text-sm text-gray-800 focus:z-10 focus:border-blue-500 focus:ring-blue-500 disabled:pointer-events-none disabled:bg-white disabled:text-gray-800 sm:border-s-0 sm:border-t sm:border-e-0 dark:bg-neutral-700 dark:border-neutral-700 dark:text-neutral-200 dark:disabled:bg-neutral-700 dark:disabled:text-neutral-200" disabled>
+                    <div class="budget-amount-wrap relative h-[46px]">
+                        <input type="text" inputmode="text" name="change_order_budgets[${index}][budget]" class="co-budget-amount h-[46px] w-full rounded-none border border-t-0 border-gray-200 bg-white ps-9 pe-3 text-sm text-gray-800 focus:z-10 focus:border-blue-500 focus:ring-blue-500 sm:border-t dark:bg-neutral-700 dark:border-neutral-700 dark:text-neutral-200" placeholder="0.00">
+                        <div class="absolute inset-y-0 inset-s-0 flex items-center pointer-events-none ps-3">
+                            <span class="text-gray-500 dark:text-neutral-400">$</span>
+                        </div>
+                    </div>
+                    <button type="button" class="h-[46px] rounded-b-lg border border-t-0 border-gray-200 text-gray-700 hover:bg-gray-50 sm:rounded-s-none sm:rounded-e-lg sm:border-t sm:border-s-0 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-700" onclick="removeCOBudgetRow(this)">X</button>
+                </div>
+            `);
+
+            initBudgetSelect(rows.lastElementChild.querySelector('.co-budget-account'));
+            updateCODuplicateConceptFields();
+        }
+
+        function removeCOBudgetRow(button) {
+            const rows = document.querySelectorAll('#coBudgetRows .budget-row');
+            if (rows.length <= 1) {
+                if (rows.length === 1) {
+                    rows[0].querySelector('.co-budget-account').value = '';
+                    rows[0].querySelector('.co-budget-amount').value = '';
+                    rows[0].querySelector('.co-budget-concept').value = '';
+                    updateCODuplicateConceptFields();
+                }
+                button.closest('.budget-row').remove();
+                reindexCOBudgetRows();
+                return;
+            }
+            button.closest('.budget-row').remove();
+            reindexCOBudgetRows();
+            updateCODuplicateConceptFields();
+        }
+
+        function reindexCOBudgetRows() {
+            document.querySelectorAll('#coBudgetRows .budget-row').forEach((row, index) => {
+                row.querySelector('.co-budget-account').name = `change_order_budgets[${index}][chartAccount_id]`;
+                row.querySelector('.co-budget-amount').name = `change_order_budgets[${index}][budget]`;
+                row.querySelector('.co-budget-concept').name = `change_order_budgets[${index}][concept]`;
+            });
+        }
+
+        function updateCODuplicateConceptFields() {
+            const rows = Array.from(document.querySelectorAll('#coBudgetRows .budget-row'));
+            const selectedCounts = rows.reduce((counts, row) => {
+                const accountId = row.querySelector('.co-budget-account')?.value || '';
+                if (accountId) counts[accountId] = (counts[accountId] || 0) + 1;
+                return counts;
+            }, {});
+
+            rows.forEach(row => {
+                const accountId = row.querySelector('.co-budget-account')?.value || '';
+                const concept = row.querySelector('.co-budget-concept');
+                const isDuplicate = accountId && selectedCounts[accountId] > 1;
+
+                concept.disabled = !isDuplicate;
+                concept.placeholder = isDuplicate ? '{{ __('Concept') }}' : '';
+                concept.required = Boolean(isDuplicate);
+
+                if (!isDuplicate) {
+                    concept.value = '';
+                }
+            });
+        }
     </script>
 </x-layouts.app>

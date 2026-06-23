@@ -16,6 +16,7 @@ class Pay extends Model
         'contract_id',
         'chartAccount_id',
         'payment_allocations',
+        'change_order_allocations',
         'amount',
         'description',
         'attachment_link',
