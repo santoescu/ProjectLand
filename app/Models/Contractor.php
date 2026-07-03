@@ -16,4 +16,9 @@ class Contractor extends Model
         'contact_email',
         'payment_method',
     ];
+
+    public function insurances()
+    {
+        return $this->hasMany(Insurance::class);
+    }
 }

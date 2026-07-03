@@ -38,6 +38,13 @@
             'url' => route('chartAccounts.index'),
             'current' => request()->routeIs('chartAccounts.index'),
         ];
+
+        $groups[] = [
+            'name' => __('Insurances'),
+            'icon' => 'shield-check',
+            'url' => route('insurances.index'),
+            'current' => request()->routeIs('insurances.index'),
+        ];
     }
 
     if ($userRole === 'admin') {

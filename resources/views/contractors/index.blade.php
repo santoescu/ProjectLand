@@ -32,6 +32,7 @@
                                 <th scope="col" class="px-6 py-3 text-start text-xs font-medium text-gray-500 uppercase dark:text-neutral-500">{{__('Phone')}}</th>
                                 <th scope="col" class="px-6 py-3 text-start text-xs font-medium text-gray-500 uppercase dark:text-neutral-500">{{__('Email')}}</th>
                                 <th scope="col" class="px-6 py-3 text-start text-xs font-medium text-gray-500 uppercase dark:text-neutral-500">{{__('Payment method')}}</th>
+                                <th scope="col" class="px-6 py-3 text-start text-xs font-medium text-gray-500 uppercase dark:text-neutral-500">{{__('Insurance')}}</th>
                                 <th scope="col" class="px-6 py-3 text-end text-xs font-medium text-gray-500 uppercase dark:text-neutral-500">{{__('Actions')}}</th>
                             </tr>
                             </thead>
@@ -43,6 +44,17 @@
                                     <td class="px-4 py-4 text-sm font-medium text-gray-800 break-words dark:text-neutral-200">{{ $contractor->contact_phone }}</td>
                                     <td class="px-4 py-4 text-sm font-medium text-gray-800 break-words dark:text-neutral-200">{{ $contractor->contact_email }}</td>
                                     <td class="px-4 py-4 text-sm font-medium text-gray-800 break-words dark:text-neutral-200">{{ $contractor->payment_method }}</td>
+                                    @php
+                                        $nearestInsurance = $contractor->insurances->where('status', '!=', 'expired')->sortBy('expiration_date')->first()
+                                            ?? $contractor->insurances->where('status', 'expired')->sortByDesc('expiration_date')->first();
+                                    @endphp
+                                    <td class="px-4 py-4 text-sm font-medium text-gray-800 dark:text-neutral-200">
+                                        @if ($nearestInsurance)
+                                            <flux:badge :color="$nearestInsurance->status_color" inset="top bottom">{{ $nearestInsurance->status_label }}</flux:badge>
+                                        @else
+                                            <span class="text-gray-400 dark:text-neutral-500">—</span>
+                                        @endif
+                                    </td>
                                     <td class="px-6 py-4 flex justify-center gap-2">
 
 

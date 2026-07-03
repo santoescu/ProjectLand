@@ -28,7 +28,7 @@ class ContractController extends Controller
             $query->where('project_id', $effectiveProjectId);
         }
 
-        $contracts = $query->with('contractor', 'project')->get();
+        $contracts = $query->with('contractor', 'contractor.insurances', 'project')->get();
         $contractors = Contractor::all();
         $projects = Project::activeOrId($effectiveProjectId)->orderBy('name')->get();
         $chartAccounts = ChartAccount::all();

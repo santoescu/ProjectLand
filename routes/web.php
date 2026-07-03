@@ -11,6 +11,7 @@ use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ChartAccountController;
 use App\Http\Controllers\PayController;
+use App\Http\Controllers\InsuranceController;
 use App\Livewire\Settings\Language;
 
 
@@ -58,6 +59,7 @@ Route::middleware(['auth'])->group(function () {
         Route::resource('chartAccounts', ChartAccountController::class)->except(['show']);
         Route::get('chartAccounts/tree', [ChartAccountController::class, 'tree'])
             ->name('chartAccounts.tree');
+        Route::resource('insurances', InsuranceController::class)->except(['show']);
     });
 
     Route::middleware(['role:admin'])->group(function () {

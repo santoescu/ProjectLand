@@ -14,7 +14,7 @@ class ContractorController extends Controller
     public function index(Request $request)
     {
 
-        $query = Contractor::query();
+        $query = Contractor::with('insurances');
 
         $contractors = $query->get();
 
