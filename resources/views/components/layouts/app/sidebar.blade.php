@@ -4,6 +4,12 @@
 
     $groups = [
         [
+            'name' => __('Portfolio'),
+            'icon' => 'chart-bar-square',
+            'url' => route('portfolio'),
+            'current' => request()->routeIs('portfolio'),
+        ],
+        [
             'name' => __('Payables'),
             'icon' => 'currency-dollar',
             'url' => route('pays.index'),

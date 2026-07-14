@@ -12,6 +12,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\ChartAccountController;
 use App\Http\Controllers\PayController;
 use App\Http\Controllers\InsuranceController;
+use App\Http\Controllers\PortfolioController;
 use App\Livewire\Settings\Language;
 
 
@@ -56,6 +57,10 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware(['role:accounting_assistant,director,admin'])->group(function () {
         Route::resource('contractors', ContractorController::class);
         Route::resource('projects', ProjectController::class);
+        Route::get('portfolio', [PortfolioController::class, 'index'])->name('portfolio');
+        Route::post('portfolio', [PortfolioController::class, 'store'])->name('portfolio.store');
+        Route::put('portfolio/{id}', [PortfolioController::class, 'update'])->name('portfolio.update');
+        Route::patch('portfolio/{id}/milestones/{index}', [PortfolioController::class, 'updateMilestoneStatus'])->name('portfolio.milestones.update');
         Route::resource('chartAccounts', ChartAccountController::class)->except(['show']);
         Route::get('chartAccounts/tree', [ChartAccountController::class, 'tree'])
             ->name('chartAccounts.tree');
